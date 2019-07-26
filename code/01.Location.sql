@@ -3,13 +3,13 @@
  --Author: 이성원
  --Date: 2017.01.16
  
- @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ cohort_cdm : DB containing NHIS National Sample cohort DB
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  --Description: Location 테이블 생성
  --Generating Table: LOCATION
 ***************************************/
@@ -17,7 +17,7 @@
 /**************************************
  1. 테이블 생성
 ***************************************/  
-Create table @ResultDatabaseSchema.LOCATION (
+Create table cohort_cdm.LOCATION (
 	location_id 	integer primary key,
 	address_1 		varchar(50),
 	address_2 		varchar(50), 
@@ -32,7 +32,7 @@ Create table @ResultDatabaseSchema.LOCATION (
 /**************************************
  2. 데이터 입력
 ***************************************/  
-INSERT INTO @ResultDatabaseSchema.LOCATION
+INSERT INTO cohort_cdm.LOCATION
 VALUES
 ('11110','서울특별시','11110 종로구','서울특별시',null,null,'KOREA','11110'),
 ('11140','서울특별시','11140 중구','서울특별시',null,null,'KOREA','11140'),
