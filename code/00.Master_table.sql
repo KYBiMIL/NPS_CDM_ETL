@@ -3,13 +3,13 @@
  --Author: 이성원
  --Date: 2017.01.11
  
- @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ cohort_cdm : DB containing NHIS National Sample cohort DB
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  --Description: 표본코호트DB T1 테이블들 중 30T, 40T, 60T, 검진 테이블의 primary key를 저장하고 유니크한 일련번호를 저장한 테이블 생성
 			   생성된 일련번호는 condition, drug, procedure, device 테이블의 primary key로 사용되며, 검진 테이블에 대해 생성한 일련번호는 visit_occurrence에 입력되는 데이터의 primary key로 사용
                변환된 CDM 데이터에서 표본코호트DB 데이터를 추적하기 위한 목적으로 생성함
