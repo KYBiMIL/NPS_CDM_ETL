@@ -3,13 +3,13 @@
  --Author: 유승찬
  --Date: 2017.09.26
  
- @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ cohort_cdm : DB containing NHIS National Sample cohort DB
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  --Description: MEASUREMENT 테이블 생성				
  --생성 Table: MEASUREMENT
 ***************************************/
@@ -18,8 +18,8 @@
  0. 테이블 생성  (33440451)
 ***************************************/ 
 
-IF OBJECT_ID('@ResultDatabaseSchema.MEASUREMENT', 'U') IS NULL
-CREATE TABLE @ResultDatabaseSchema.MEASUREMENT
+IF OBJECT_ID('cohort_cdm.MEASUREMENT', 'U') IS NULL
+CREATE TABLE cohort_cdm.MEASUREMENT
     (
      measurement_id						BIGINT						NOT NULL , 
      person_id							INTEGER						NOT NULL ,
@@ -100,7 +100,7 @@ CREATE TABLE #measurement_mapping
  1. 행을 열로 전환
 ***************************************/ 
 select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value into @ResultDatabaseSchema.GJ_VERTICAL
-from @NHISDatabaseSchema.@NHIS_GJ
+from cohort_cdm.NHID_GJ
 unpivot (meas_value for meas_type in ( -- 47 검진 항목
 	height, weight, waist, bp_high, bp_lwst,
 	blds, tot_chole, triglyceride, hdl_chole, ldl_chole,
@@ -121,7 +121,7 @@ unpivot (meas_value for meas_type in ( -- 47 검진 항목
 /**************************************
  2. 수치형 데이터 입력  
 ***************************************/ 
-INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
+INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
 											unit_concept_id, range_low, range_high, provider_id, visit_occurrence_id, measurement_source_value, measurement_source_concept_id, unit_source_value, value_source_value)
 
 
@@ -161,11 +161,11 @@ INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measur
 			a.meas_value as value_source_value
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 			
-			from @ResultDatabaseSchema.GJ_VERTICAL) a
+			from cohort_cdm.GJ_VERTICAL) a
 		JOIN #measurement_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('HEIGHT', 'WEIGHT',	'WAIST', 'BP_HIGH', 'BP_LWST', 'BLDS', 'TOT_CHOLE', 'TRIGLYCERIDE',	'HDL_CHOLE',		
@@ -178,7 +178,7 @@ INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measur
 /**************************************
  2. 코드형 데이터 입력  
 ***************************************/ 
-INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
+INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
 											unit_concept_id, range_low, range_high, provider_id, visit_occurrence_id, measurement_source_value, measurement_source_concept_id, unit_source_value, value_source_value)
 
 
@@ -205,11 +205,11 @@ INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measur
 			a.meas_value as value_source_value
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 			
-			from @ResultDatabaseSchema.GJ_VERTICAL) a
+			from cohort_cdm.GJ_VERTICAL) a
 		JOIN #measurement_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('GLY_CD', 'OLIG_OCCU_CD', 'OLIG_PROTE_CD')
@@ -219,6 +219,6 @@ INSERT INTO @ResultDatabaseSchema.MEASUREMENT (measurement_id, person_id, measur
 /**************************************
  3.source_value의 값을 value_as_number에도 입력
 ***************************************/ 
-UPDATE @ResultDatabaseSchema.MEASUREMENT
+UPDATE cohort_cdm.MEASUREMENT
 SET value_as_number = measurement_source_value
 where measurement_source_value is not null
