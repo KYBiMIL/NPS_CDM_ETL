@@ -3,13 +3,13 @@
  --Author: 이성원
  --Date: 2017.01.18
  
- cohort_cdm : DB containing NHIS National Sample cohort DB
- NHID_JK: JK table in NHIS NSC
- NHID_20T: 20 table in NHIS NSC
- NHID_30T: 30 table in NHIS NSC
- NHID_40T: 40 table in NHIS NSC
- NHID_60T: 60 table in NHIS NSC
- NHID_GJ: GJ table in NHIS NSC
+ @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  
  --Description: Care_site 테이블 생성
 			   1) 표본코호트DB에는 요양기관이 년도별로 중복 입력되어 있음. 지역이동, 설립구분의 변화등이 추적 가능함
@@ -30,15 +30,17 @@ Create table cohort_cdm.CARE_SITE (
 	place_of_service_source_value	varchar(50)
 );
 
+
+
 /**************************************
  2. 데이터 입력
 	: place_of_service_source_value - 요양기관종별코드/요양기관설립구분
 									- 요양기관설립구분이 1자리 숫자인 경우, 앞에 0을 붙여줌
 ***************************************/  
 INSERT INTO cohort_cdm.CARE_SITE
-SELECT CARE_SITE_ID
+SELECT a.ykiho_id,
 	null as care_site_name,
-	case when care_site_id_gubun_cd='10' then 4068130 --종합병원(Tertiary care hospital) 
+	case when a.ykiho_gubun_cd='10' then 4068130 --종합병원(Tertiary care hospital) 
 		 when a.ykiho_gubun_cd between '20' and '27' then 4318944 --일반병원  Hospital
 		 when a.ykiho_gubun_cd='28' then 82020103 --요양병원  
 		 when a.ykiho_gubun_cd='29' then 4268912 --정신요양병원 Psychiatric hospital 
@@ -60,10 +62,8 @@ SELECT CARE_SITE_ID
 	a.ykiho_sido as location_id,
 	a.ykiho_id as care_site_source_value,
 	(a.ykiho_gubun_cd + '/' + (case when len(a.org_type) = 1 then '0' + org_type else org_type end)) as place_of_service_source_value
-FROM cohort_cdm.NHID_JK a, 
-(select LOCATION_ID, max(stnd_y) as max_stnd_y
-	from cohort_cdm.NHID_JK c
-	group by ykiho_id
-) b
+FROM cohort_cdm.NHID_YK a, (select ykiho_id, max(stnd_y) as max_stnd_y
+	from cohort_cdm.NHID_YK c
+	group by ykiho_id) b
 where a.ykiho_id=b.ykiho_id
 and a.stnd_y=b.max_stnd_y
