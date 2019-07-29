@@ -3,14 +3,14 @@
  --Author: 이성원
  --Date: 2017.02.08
  
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
-@NHIS_JK: JK table in NHIS NSC
-@NHIS_20T: 20 table in NHIS NSC
-@NHIS_30T: 30 table in NHIS NSC
-@NHIS_40T: 40 table in NHIS NSC
-@NHIS_60T: 60 table in NHIS NSC
-@NHIS_GJ: GJ table in NHIS NSC
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
 @CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
 @DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
@@ -24,7 +24,7 @@
 ***************************************/ 
 -- 1) 30T의 항/목 코드 현황 체크매핑
 select clause_cd, item_cd, count(clause_cd)
-from @NHISDatabaseSchema.@NHIS_30T
+from cohort_cdm.NHID_30T
 group by clause_cd, item_cd
 
 --> 결과는 "08. 참고) 30T, 60T의 코드 분석.xlsx" 참고
@@ -32,20 +32,20 @@ group by clause_cd, item_cd
 
 -- 2) 30T의 계산식에 들어갈 숫자 데이터 정합성 체크
 -- 1일 투여량 또는 실시 횟수
-select dd_mqty_exec_freq, count(dd_mqty_exec_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_30T
-where dd_mqty_exec_freq is not null and ISNUMERIC(dd_mqty_exec_freq) = 0
+select dd_mqty_exec_freq, count(dd_mqty_exec_freq) as cnt          
+from cohort_cdm.NHID_30T
+where dd_mqty_exec_freq is not null and ISNUMERIC(dd_mqty_exec_freq) = 0     --ISNUMERIC:부적합한 식별자
 group by dd_mqty_exec_freq
 
 -- 총투여일수 또는 실시횟수
 select mdcn_exec_freq, count(mdcn_exec_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_30T
+from cohort_cdm.NHID_30T
 where mdcn_exec_freq is not null and ISNUMERIC(mdcn_exec_freq) = 0
 group by mdcn_exec_freq
 
 -- 1회 투약량
 select dd_mqty_freq, count(dd_mqty_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_30T
+from cohort_cdm.NHID_30T
 where dd_mqty_freq is not null and ISNUMERIC(dd_mqty_freq) = 0
 group by dd_mqty_freq
 
@@ -55,19 +55,19 @@ group by dd_mqty_freq
 -- 3) 60T의 계산식에 들어갈 숫자 데이터 정합성 체크
 -- 1회 투약량
 select dd_mqty_freq, count(dd_mqty_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_60T
+from cohort_cdm.NHID_60T
 where dd_mqty_freq is not null and ISNUMERIC(dd_mqty_freq) = 0
 group by dd_mqty_freq
 
 -- 1일 투약량
 select dd_exec_freq, count(dd_exec_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_60T
+from cohort_cdm.NHID_60T
 where dd_exec_freq is not null and ISNUMERIC(dd_exec_freq) = 0
 group by dd_exec_freq
 
 -- 총투여일수 또는 실시횟수
 select mdcn_exec_freq, count(mdcn_exec_freq) as cnt
-from @NHISDatabaseSchema.@NHIS_60T
+from cohort_cdm.NHID_60T
 where mdcn_exec_freq is not null and ISNUMERIC(mdcn_exec_freq) = 0
 group by mdcn_exec_freq
 
@@ -76,7 +76,7 @@ group by mdcn_exec_freq
 
 -- 4) 매핑 테이블의 약코드 1:N 건수 체크
 select source_code, count(source_code)
-from @ResultDatabaseSchema.@DRUG_MAPPINGTABLE
+from cohort_cdm.DRUG_MAPPINGTABLE
 group by source_code
 having count(source_code)>1
 --> 1:N 매핑 약코드 없음
@@ -84,12 +84,12 @@ having count(source_code)>1
 
 -- 5) 변환 예상 건수 파악
 select count(a.key_seq)
-from @NHISDatabaseSchema.@NHIS_30T a, @ResultDatabaseSchema.@DRUG_MAPPINGTABLE b, @NHISDatabaseSchema.@NHIS_20T c
+from cohort_cdm.NHID_30T a, cohort_cdm.DRUG_MAPPINGTABLE b, cohort_cdm.NHID_20T c
 where a.div_cd=b.source_code
 and a.key_seq=c.key_seq
 
 select count(a.key_seq)
-from @NHISDatabaseSchema.@NHIS_60T a, @ResultDatabaseSchema.@DRUG_MAPPINGTABLE b, @NHISDatabaseSchema.@NHIS_20T c
+from cohort_cdm.NHID_60T a, cohort_cdm.DRUG_MAPPINGTABLE b, cohort_cdm.NHID_20T c
 where a.div_cd=b.source_code
 and a.key_seq=c.key_seq
 
@@ -108,40 +108,40 @@ or a.drug_exposure_end_date > b.observation_period_end_date)
 select b.concept_name, x.*
 from 
 (select A.*, B.concept_id
-from @NHISDatabaseSchema.@NHIS_30T AS A
-join @ResultDatabaseSchema.@DRUG_MAPPINGTABLE B
+from cohort_cdm.NHID_30T AS A
+join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
    where cast(DD_MQTY_EXEC_FREQ as float)<1
    and cast(DD_MQTY_EXEC_FREQ as float)>=0) x
-   join @ResultDatabaseSchema.concept b
+   join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
 select b.concept_name, x.*
 from 
 (select A.*, B.concept_id
-from @NHISDatabaseSchema.@NHIS_30T AS A
-join @ResultDatabaseSchema.@DRUG_MAPPINGTABLE B
+from cohort_cdm.NHID_30T AS A
+join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
    where cast(DD_MQTY_EXEC_FREQ as float)>1) x
-   join @ResultDatabaseSchema.concept b
+   join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
 
 select b.concept_name, x.*
 from 
 (select A.*, B.concept_id
-from @NHISDatabaseSchema.@NHIS_60T AS A
-join @ResultDatabaseSchema.@DRUG_MAPPINGTABLE B
+from cohort_cdm.NHID_60T AS A
+join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
    where cast(DD_MQTY_FREQ as float)>1) x
-   join @NHISDatabaseSchema.concept b
+   join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
 
 /**************************************
  2. 테이블 생성
 ***************************************/  
-CREATE TABLE @ResultDatabaseSchema.DRUG_EXPOSURE ( 
+CREATE TABLE cohort_cdm.DRUG_EXPOSURE ( 
      drug_exposure_id				BIGINT	 	NOT NULL , 
      person_id						INTEGER			NOT NULL , 
      drug_concept_id				INTEGER			NULL , 
@@ -165,11 +165,12 @@ CREATE TABLE @ResultDatabaseSchema.DRUG_EXPOSURE (
 	 dose_unit_source_value			VARCHAR(50)		NULL
     );
 
+
 	
 /**************************************
  3. 30T를 이용하여 데이터 입력
 ***************************************/  
-insert into @ResultDatabaseSchema.DRUG_EXPOSURE 
+insert into cohort_cdm.DRUG_EXPOSURE 
 (drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_date, drug_exposure_end_date, 
 drug_type_concept_id, stop_reason, refills, quantity, days_supply, 
 sig, route_concept_id, effective_drug_dose, dose_unit_concept_id, lot_number,
@@ -212,11 +213,11 @@ FROM
 			case when x.clause_cd is not null and len(x.clause_cd) = 1 and isnumeric(x.clause_cd)=1 and convert(int, x.clause_cd) between 1 and 9 then '0' + x.clause_cd else x.clause_cd end as clause_cd,
 			case when x.item_cd is not null and len(x.item_cd) = 1 and isnumeric(x.item_cd)=1 and convert(int, x.item_cd) between 1 and 9 then '0' + x.item_cd else x.item_cd end as item_cd,
 			y.master_seq, y.person_id			
-	FROM @NHISDatabaseSchema.@NHIS_30T x, 
+	FROM cohort_cdm.NHID_30T x, 
 	     (select master_seq, person_id, key_seq, seq_no from seq_master where source_Table='130') y
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a,
-	@ResultDatabaseSchema.@DRUG_MAPPINGTABLE b
+	cohort_cdm.DRUG_MAPPINGTABLE b
 where a.div_cd=b.source_code
 
 
@@ -257,11 +258,11 @@ FROM
 			case when x.dd_mqty_freq is not null and isnumeric(x.dd_mqty_freq)=1 and cast(x.dd_mqty_freq as float) > '0' then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and isnumeric(x.dd_exec_freq)=1 and cast(x.dd_exec_freq as float) > '0' then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			y.master_seq, y.person_id			
-	FROM @NHISDatabaseSchema.@NHIS_60T x, 
+	FROM cohort_cdm.NHID_60T x, 
 	     (select master_seq, person_id, key_seq, seq_no from seq_master where source_Table='160') y
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a,
-	@ResultDatabaseSchema.@DRUG_MAPPINGTABLE b
+	cohort_cdm.DRUG_MAPPINGTABLE b
 where a.div_cd=b.source_code
 
 
