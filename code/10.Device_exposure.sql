@@ -3,18 +3,18 @@
  --Author: 조재형
  --Date: 2017.02.15
  
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
-@NHIS_JK: JK table in NHIS NSC
-@NHIS_20T: 20 table in NHIS NSC
-@NHIS_30T: 30 table in NHIS NSC
-@NHIS_40T: 40 table in NHIS NSC
-@NHIS_60T: 60 table in NHIS NSC
-@NHIS_GJ: GJ table in NHIS NSC
-@CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
-@DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
-@PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
-@DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
+CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
+DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
+DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
  --Description: device 테이블 생성
 			   1) device_exposure_end_date는 drug_exposure의 end_date와 같은 방법으로 생성
@@ -32,7 +32,7 @@
 ***************************************/ 
  
 
-CREATE TABLE @ResultDatabaseSchema.DEVICE_EXPOSURE ( 
+CREATE TABLE cohort_cdm.DEVICE_EXPOSURE ( 
      device_exposure_id				BIGINT	 		PRIMARY KEY , 
      person_id						INTEGER			NOT NULL , 
      divce_concept_id				INTEGER			NOT NULL , 
@@ -47,12 +47,13 @@ CREATE TABLE @ResultDatabaseSchema.DEVICE_EXPOSURE (
 	 device_source_concept_id		integer			NULL 
     );
 
+
 /**************************************
  2. 데이터 입력 및 확인 (30t : 8515647개 행이 영향을 받음, 03:53, 매핑이 안돼서/ 60t : 72개 행이 영향을 받음, 00:48, 매핑이 안돼서) 총 8,515,719건
 ***************************************/  
 
 --30t 입력 (8515647개 행이 영향을 받음) 02:51
-insert into @ResultDatabaseSchema.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, divce_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
@@ -78,17 +79,17 @@ FROM
 			case when x.dd_mqty_exec_freq is not null and x.dd_mqty_exec_freq > '0' and isnumeric(x.dd_mqty_exec_freq)=1 then cast(x.dd_mqty_exec_freq as float) else 1 end as dd_mqty_exec_freq,
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM @NHISDatabaseSchema.@NHIS_30T x, @ResultDatabaseSchema.SEQ_MASTER y
+	FROM cohort_cdm.NHID_30T x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='130'
 	AND x.key_seq=y.key_seq
-	AND x.seq_no=y.seq_no) a JOIN @ResultDatabaseSchema.@DEVICE_MAPPINGTABLE b 
+	AND x.seq_no=y.seq_no) a JOIN cohort_cdm.DEVICE_MAPPINGTABLE b 
 ON a.div_cd=b.sourcecode
 
 
 
 
 --60t 입력 (72개 행이 영향을 받음) 00:46
-insert into @ResultDatabaseSchema.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, divce_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
@@ -114,15 +115,15 @@ FROM
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and isnumeric(x.dd_exec_freq)=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM @NHISDatabaseSchema.@NHIS_60T x, @ResultDatabaseSchema.SEQ_MASTER y
+	FROM cohort_cdm.NHID_60T x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='160'
 	AND x.key_seq=y.key_seq
-	AND x.seq_no=y.seq_no) a JOIN @ResultDatabaseSchema.@DEVICE_MAPPINGTABLE b
+	AND x.seq_no=y.seq_no) a JOIN cohort_cdm.DEVICE_MAPPINGTABLE b
 ON a.div_cd=b.sourcecode
 
 
 -- quantity가 0인 경우 1로 변경 (6268개 행이 영향을 받음) 00:04
-update @ResultDatabaseSchema.DEVICE_EXPOSURE
+update cohort_cdm.DEVICE_EXPOSURE
 set quantity = 1
 where quantity = 0
 
