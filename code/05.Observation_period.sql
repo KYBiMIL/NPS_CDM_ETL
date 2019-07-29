@@ -4,12 +4,12 @@
  --Date: 2017.09.12
  
  @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  --Description: Observation_period 테이블 생성
  --Generating Table: OBSERVATION_PERIOD
 ***************************************/
@@ -32,8 +32,8 @@ select
             else convert(date, a.stnd_y + '1231', 112)
       end as observation_period_end_date --관측종료일
 into #observation_period_temp1
-from @NHISDatabaseSchema.@NHIS_JK a,
-      @ResultDatabaseSchema.person b left join @ResultDatabaseSchema.death c
+from cohort_cdm.NHID_JK a,
+      cohort_cdm.person b left join cohort_cdm.death c
       on b.person_id=c.person_id
 where a.person_id=b.person_id
 --(12132633개 행이 영향을 받음), 00:05
@@ -75,7 +75,7 @@ select identity(int, 1, 1) as observation_period_id,
 	min(observation_period_start_date) as observation_period_start_date,
 	max(observation_period_end_date) as observation_period_end_date,
 	44814725 as PERIOD_TYPE_CONCEPT_ID
-INTO @ResultDatabaseSchema.OBSERVATION_PERIOD
+INTO cohort_cdm.OBSERVATION_PERIOD
 from #observation_period_temp4
 group by person_id, sumday
 order by person_id, observation_period_start_date
