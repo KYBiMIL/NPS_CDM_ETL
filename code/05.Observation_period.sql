@@ -4,12 +4,12 @@
  --Date: 2017.09.12
  
  cohort_cdm : DB containing NHIS National Sample cohort DB
- @NHID_JK: JK table in NHIS NSC
- @NHID_20T: 20 table in NHIS NSC
- @NHID_30T: 30 table in NHIS NSC
- @NHID_40T: 40 table in NHIS NSC
- @NHID_60T: 60 table in NHIS NSC
- @NHID_GJ: GJ table in NHIS NSC
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  --Description: Observation_period 테이블 생성
  --Generating Table: OBSERVATION_PERIOD
 ***************************************/
