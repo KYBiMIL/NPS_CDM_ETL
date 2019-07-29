@@ -4,12 +4,12 @@
  --Date: 2017.01.26
  
  cohort_cdm : DB containing NHIS National Sample cohort DB
- @NHID_JK: JK table in NHIS NSC
- @NHID_20T: 20 table in NHIS NSC
- @NHID_30T: 30 table in NHIS NSC
- @NHID_40T: 40 table in NHIS NSC
- @NHID_60T: 60 table in NHIS NSC
- @NHID_GJ: GJ table in NHIS NSC
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  --Description: Visit_occurrence 테이블 생성
  --Generating Table: VISIT_OCCURRENCE
 ***************************************/
