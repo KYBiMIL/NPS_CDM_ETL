@@ -3,18 +3,18 @@
  --Author: 이성원
  --Date: 2017.02.08
  
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
-@NHIS_JK: JK table in NHIS NSC
-@NHIS_20T: 20 table in NHIS NSC
-@NHIS_30T: 30 table in NHIS NSC
-@NHIS_40T: 40 table in NHIS NSC
-@NHIS_60T: 60 table in NHIS NSC
-@NHIS_GJ: GJ table in NHIS NSC
-@CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
-@DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
-@PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
-@DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
+CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
+DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
+DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
  --Description: Cost 테이블 생성
  --Generating Table: COST
@@ -23,7 +23,7 @@
 /**************************************
  1. 테이블 생성
 ***************************************/ 
-CREATE TABLE @ResultDatabaseSchema.COST (
+CREATE TABLE cohort_cdm.COST (
 	cost_id	bigint	primary key,
 	cost_event_id	bigint	not null,
 	cost_domain_id	varchar(20)	not null,
@@ -48,6 +48,7 @@ CREATE TABLE @ResultDatabaseSchema.COST (
 	drg_source_value	varchar(50)
 );
 
+
 /**************************************
  2. 데이터 입력
     1) Visit
@@ -59,7 +60,7 @@ CREATE TABLE @ResultDatabaseSchema.COST (
 ---------------------------------------------------
 -- 1) Visit
 ---------------------------------------------------
-INSERT INTO @ResultDatabaseSchema.COST
+INSERT INTO cohort_cdm.COST
 	(cost_id, cost_event_id, cost_domain_id, cost_type_concept_id, currency_concept_id,
 	total_charge, total_cost, total_paid, paid_by_payer, paid_by_patient,
 	paid_patient_copay, paid_patient_coinsurance, paid_patient_deductiable, paid_by_primary, paid_ingredient_cost,
@@ -88,7 +89,7 @@ SELECT
 	null as drg_concept_id,
 	null as revenue_code_source_value,
 	b.dmd_drg_no as drg_source_value
-from visit_occurrence a, @NHISDatabaseSchema.@NHIS_20T b
+from visit_occurrence a, cohort_cdm.NHID_20T b
 where a.visit_occurrence_id=b.key_seq
 and a.person_id=b.person_id;
 
@@ -132,7 +133,7 @@ from (select person_id, drug_exposure_id, drug_exposure_start_date
 	from drug_exposure
 	where drug_type_concept_id=38000180) a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from seq_master m, @NHISDatabaseSchema.@NHIS_30T n
+	from seq_master m, cohort_cdm.NHID_30T n
 	where m.source_table='130'
 	and m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
@@ -175,7 +176,7 @@ from (select person_id, drug_exposure_id, drug_exposure_start_date
 	where drug_type_concept_id=38000177) a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
 	from (select master_seq, key_seq, seq_no, person_id from seq_master where source_table='160') m, 
-	@NHISDatabaseSchema.@NHIS_60T n
+	cohort_cdm.NHID_60T n
 	where m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
 where b.master_seq=left(a.drug_exposure_id, 10)
@@ -218,7 +219,7 @@ SELECT
 	null as drg_source_value
 from procedure_occurrence a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from seq_master m, @NHISDatabaseSchema.@NHIS_30T n
+	from seq_master m, cohort_cdm.NHID_30T n
 	where m.source_table='130'
 	and m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
@@ -259,7 +260,7 @@ SELECT
 from procedure_occurrence a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
 	from (select master_seq, key_seq, seq_no, person_id from seq_master where source_table='160') m, 
-	@NHISDatabaseSchema.@NHIS_60T n
+	cohort_cdm.NHID_60T n
 	where m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
 where left(a.procedure_occurrence_id, 10)=b.master_seq
@@ -304,7 +305,7 @@ from (select device_exposure_id, person_id, device_exposure_start_date
 	from device_exposure 
 	where device_source_value not in (select sourcecode from procedure_EDI_mapped_20161007)) a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from seq_master m, @NHISDatabaseSchema.@NHIS_30T n
+	from seq_master m, cohort_cdm.NHID_30T n
 	where m.source_table='130'
 	and m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
@@ -347,7 +348,7 @@ from (select device_exposure_id, person_id, device_exposure_start_date
 	where device_source_value not in (select sourcecode from procedure_EDI_mapped_20161007)) a,  
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
 	from (select master_seq, key_seq, seq_no, person_id from seq_master where source_table='160') m, 
-	@NHISDatabaseSchema.@NHIS_60T n
+	cohort_cdm.NHID_60T n
 	where m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
 where left(a.device_exposure_id, 10)=b.master_seq
