@@ -3,7 +3,7 @@
  --Author: 이성원
  --Date: 2017.01.26
  
- @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
+ cohort_cdm : DB containing NHIS National Sample cohort DB
  @NHID_JK: JK table in NHIS NSC
  @NHID_20T: 20 table in NHIS NSC
  @NHID_30T: 30 table in NHIS NSC
