@@ -3,19 +3,19 @@
  --Author: 조재형
  --Date: 2017.03.15
  
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
-@NHIS_JK: JK table in NHIS NSC
-@NHIS_20T: 20 table in NHIS NSC
-@NHIS_30T: 30 table in NHIS NSC
-@NHIS_40T: 40 table in NHIS NSC
-@NHIS_60T: 60 table in NHIS NSC
-@NHIS_GJ: GJ table in NHIS NSC
-@NHIS_GJ_vertical : GJ table from NHIS NSC, which was vertically transformatted
-@CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
-@DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
-@PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
-@DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
+NHID_GJ_vertical : GJ table from NHIS NSC, which was vertically transformatted
+CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
+DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
+DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
  --Description: OBSERVATION 테이블 생성
  --Generating Table: OBSERVATION
@@ -29,7 +29,7 @@
 --drop table #observation_mapping09
 
 --IF OBJECT_ID(@ResultDatabaseSchema.OBSERVATION', 'U') IS NULL
-CREATE TABLE @ResultDatabaseSchema.OBSERVATION
+CREATE TABLE cohort_cdm.OBSERVATION
     (
      observation_id						BIGINT						NOT NULL , 
      person_id							INTEGER						NOT NULL ,
@@ -48,8 +48,9 @@ CREATE TABLE @ResultDatabaseSchema.OBSERVATION
 	 observation_source_concept_id		integer						NULL,
 	 unit_source_value					VARCHAR(50) 				NULL,
 	 qualifier_source_value				VARCHAR(50) 				NULL
-	)
-;
+	);
+    
+     
 	
 	
 -- observation mapping table(temp)
@@ -163,7 +164,7 @@ insert into #observation_mapping (meas_type, id_value, answer, observation_conce
 /**************************************
  2. 코드형 데이터 입력 (14768634개 행이 영향을 받음)
 ***************************************/ 
-INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 	select	case	when a.meas_type = 'HCHK_PMH_CD1' then cast(concat(c.master_seq, b.id_value) as bigint)
@@ -215,11 +216,11 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 							and substring(hchk_year, 1, 4) in ('2002', '2003', '2004', '2005', '2006', '2007', '2008') then cast(cast(meas_value as int)-1 as varchar(50))
 				else meas_value
 				end as meas_value 			
-			from @ResultDatabaseSchema.@NHIS_GJ_vertical) a
+			from cohort_cdm.NHID_GJ_vertical) a
 		JOIN #observation_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('HCHK_PMH_CD1', 'HCHK_PMH_CD2', 'HCHK_PMH_CD3','HCHK_APOP_PMH_YN', 'HCHK_HDISE_PMH_YN', 'HCHK_HPRTS_PMH_YN', 
@@ -235,7 +236,7 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 /**************************************
  2. 수치형 데이터 입력 (4468917개 행이 영향을 받음)
 ***************************************/ 
-INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 	select	case	when a.meas_type = 'CUR_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
@@ -267,11 +268,11 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @ResultDatabaseSchema.@NHIS_GJ_vertical) a
+			from cohort_cdm.NHID_GJ_vertical) a
 		JOIN #observation_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('CUR_SMK_TERM_RSPS_CD', 'CUR_DSQTY_RSPS_CD', 'PAST_SMK_TERM_RSPS_CD', 'PAST_DSQTY_RSPS_CD', 
@@ -313,7 +314,7 @@ insert into #observation_mapping09 (meas_type, id_value, answer, observation_con
 
 
 
-INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
@@ -339,11 +340,11 @@ select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_se
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @ResultDatabaseSchema.@NHIS_GJ_vertical) a
+			from cohort_cdm.NHID_GJ_vertical) a
 		JOIN #observation_mapping09 b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('TM1_DRKQTY_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
@@ -357,7 +358,7 @@ select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_se
 
 
 
-INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 	select	case	when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
@@ -383,11 +384,11 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @ResultDatabaseSchema.@NHIS_GJ_vertical) a
+			from cohort_cdm.NHID_GJ_vertical) a
 		JOIN #observation_mapping09 b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
-		JOIN @ResultDatabaseSchema.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('DRNK_HABIT_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
@@ -399,7 +400,7 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 /**************************************
  2. 소득분위 데이터 입력 (11716257개 행이 영향을 받음)
 ***************************************/ 
-INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 	
@@ -426,7 +427,7 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 			unit_source_value = null,
 			qualifier_source_Value = null
 
-	from (select STND_Y, PERSON_ID, CTRB_PT_TYPE_CD from @NHISDatabaseSchema.@NHIS_20T) a
+	from (select STND_Y, PERSON_ID, CTRB_PT_TYPE_CD from cohort_cdm.NHID_20T) a
 		JOIN #observation_mapping b 
 		on isnull(a.CTRB_PT_TYPE_CD,'') = isnull(b.answer,'') 
 	where a.CTRB_PT_TYPE_CD != '' and b.meas_type = 'CTRB_PT_TYPE_CD'
@@ -441,7 +442,7 @@ INSERT INTO @ResultDatabaseSchema.OBSERVATION (observation_id, person_id, observ
 
 --------------변환전 건수
 select distinct meas_type, count(meas_type)
-from @ResultDatabaseSchema.@NHIS_GJ_vertical
+from cohort_cdm.NHID_GJ_vertical
 where meas_value != ''  and substring(meas_type, 1, 30) in ('HCHK_PMH_CD1', 'HCHK_PMH_CD2', 'HCHK_PMH_CD3','HCHK_APOP_PMH_YN', 'HCHK_HDISE_PMH_YN', 'HCHK_HPRTS_PMH_YN', 
 																	'HCHK_DIABML_PMH_YN', 'HCHK_HPLPDM_PMH_YN', 'HCHK_ETCDSE_PMH_YN', 'HCHK_PHSS_PMH_YN', 'FMLY_LIVER_DISE_PATIEN_YN', 'FMLY_HPRTS_PATIEN_YN', 
 																	'FMLY_APOP_PATIEN_YN', 'FMLY_HDISE_PATIEN_YN', 'FMLY_DIABML_PATIEN_YN', 'FMLY_CANCER_PATIEN_YN', 'SMK_STAT_TYPE_RSPS_CD', 'SMK_TERM_RSPS_CD', 
