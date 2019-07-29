@@ -4,12 +4,12 @@
  --Date: 2017.02.06
  
  @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  --Description: DEATH 테이블 생성
 			   1) 표본코호트DB에는 사망한 날짜가 년도, 월까지 표시가 되기 때문에 해당 월의 1일로 사망일 정의
 			   2) 표본코호트DB는 사망한 후에도 진료기록이 있는 경우가 있음을 고려
@@ -23,7 +23,7 @@
 ***************************************/  
 
 -- death table 생성
-CREATE TABLE  @ResultDatabaseSchema.DEATH
+CREATE TABLE  cohort_cdm.DEATH
 (
     person_id							INTEGER			NOT NULL , 
     death_date							DATE			NOT NULL , 
@@ -36,7 +36,7 @@ CREATE TABLE  @ResultDatabaseSchema.DEATH
 
 
 -- 임시 death mapping table
-select * into #death_mapping from  @ResultDatabaseSchema.@CONDITION_MAPPINGTABLE
+select * into #death_mapping from  cohort_cdm.CONDITION_ERA --원래 cohort_cdm.@CONDITION_MAPPINGTABLE
 
 insert into #death_mapping (KCDCODE, NAME, CONCEPT_ID, CONCEPT_NAME) values ('A00-A09', 'infectious enteritis', 4134887, 'Infectious disease of digestive tract')
 insert into #death_mapping (KCDCODE, NAME, CONCEPT_ID, CONCEPT_NAME) values ('A15-A19', 'tuberculosis', 434557, 'Tuberculosis')
@@ -91,7 +91,7 @@ insert into #death_mapping (KCDCODE, NAME, CONCEPT_ID, CONCEPT_NAME) values ('T9
 ***************************************/  
 
 --날짜를 해당 월의 말일로 정의
-INSERT INTO @ResultDatabaseSchema.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
+INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
 	convert(varchar, DATEADD(DAY,-DATEPART(DD,DATEADD(MONTH,1,convert(VARCHAR, a.dth_ym + '01' ,23))),DATEADD(MONTH,1,convert(VARCHAR, a.dth_ym + '01' ,23))), 23) AS DEATH_DATE,
@@ -99,14 +99,14 @@ SELECT a.person_id AS PERSON_ID,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
 	NULL as cause_source_concept_id
-FROM @NHISDatabaseSchema.@NHIS_JK a left join #death_mapping b
+FROM cohort_cdm.NHID_JK a left join #death_mapping b
 on a.dth_code1=b.kcdcode
 WHERE a.dth_ym IS NOT NULL and a.dth_ym != ''
 
 
 
 --날짜 없는 경우 해당 년의 12월 31일로 death 정의
-INSERT INTO @ResultDatabaseSchema.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
+INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
 	convert(VARCHAR, STND_Y + '1231' ,23) AS DEATH_DATE,
@@ -114,7 +114,7 @@ SELECT a.person_id AS PERSON_ID,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
 	NULL as cause_source_concept_id
-FROM @NHISDatabaseSchema.@NHIS_JK a left join #death_mapping b
+FROM cohort_cdm.NHID_JK a left join #death_mapping b
 on a.dth_code1=b.kcdcode
 WHERE a.dth_ym = '' and a.DTH_CODE1 != ''
 
