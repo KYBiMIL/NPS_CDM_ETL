@@ -3,13 +3,13 @@
  --Author: 이성원
  --Date: 2017.01.18
  
- @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
- @NHID_JK: JK table in NHIS NSC
- @NHID_20T: 20 table in NHIS NSC
- @NHID_30T: 30 table in NHIS NSC
- @NHID_40T: 40 table in NHIS NSC
- @NHID_60T: 60 table in NHIS NSC
- @NHID_GJ: GJ table in NHIS NSC
+ cohort_cdm : DB containing NHIS National Sample cohort DB
+ NHID_JK: JK table in NHIS NSC
+ NHID_20T: 20 table in NHIS NSC
+ NHID_30T: 30 table in NHIS NSC
+ NHID_40T: 40 table in NHIS NSC
+ NHID_60T: 60 table in NHIS NSC
+ NHID_GJ: GJ table in NHIS NSC
  
  --Description: Care_site 테이블 생성
 			   1) 표본코호트DB에는 요양기관이 년도별로 중복 입력되어 있음. 지역이동, 설립구분의 변화등이 추적 가능함
