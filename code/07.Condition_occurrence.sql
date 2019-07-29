@@ -3,14 +3,14 @@
  --Author: 이성원
  --Date: 2017.01.31
  
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@NHIS_JK: JK table in NHIS NSC
-@NHIS_20T: 20 table in NHIS NSC
-@NHIS_30T: 30 table in NHIS NSC
-@NHIS_40T: 40 table in NHIS NSC
-@NHIS_60T: 60 table in NHIS NSC
-@NHIS_GJ: GJ table in NHIS NSC
-@CONDITION_MAPPINGTABLE : mapping table between KCD and SNOMED-CT
+cohort_cdm : DB containing NHIS National Sample cohort DB
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
+CONDITION_MAPPINGTABLE : mapping table between KCD and SNOMED-CT
  --Description: Condition_occurrence 테이블 생성
  --Generating Table: CONDITION_OCCURRENCE
 ***************************************/
@@ -18,7 +18,7 @@
 /**************************************
  1. 테이블 생성
 ***************************************/ 
-CREATE TABLE @ResultDatabaseSchema.CONDITION_OCCURRENCE ( 
+CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE ( 
      condition_occurrence_id		BIGINT			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL , 
      condition_concept_id			INTEGER			NOT NULL , 
@@ -31,6 +31,7 @@ CREATE TABLE @ResultDatabaseSchema.CONDITION_OCCURRENCE (
      condition_source_value			VARCHAR(50),
 	 condition_source_concept_id	VARCHAR(50)
 );
+
 
 
 /**************************************
@@ -46,7 +47,7 @@ CREATE TABLE @ResultDatabaseSchema.CONDITION_OCCURRENCE (
 	   2) condition_type_concept_id 값 확인 -> 유승찬 선생님
 ***************************************/ 
 
-INSERT INTO @ResultDatabaseSchema.CONDITION_OCCURRENCE 
+INSERT INTO cohort_cdm.CONDITION_OCCURRENCE 
 	(condition_occurrence_id, person_id, condition_concept_id, condition_start_date, condition_end_date,
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
@@ -77,8 +78,8 @@ from (
 		end as sick_order,
 		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
 	from (select master_seq, person_id, key_seq, seq_no from seq_master where source_table='140') a, 
-		@NHISDatabaseSchema.@NHIS_20T b,
-		@NHISDatabaseSchema.@NHIS_40T  c,
+		cohort_cdm.NHID_20T b,
+		cohort_cdm.NHID_40T  c,
 		observation_period d --추가
 	where a.person_id=b.person_id
 	and a.key_seq=b.key_seq
@@ -86,5 +87,5 @@ from (
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --추가
 	and convert(date, c.recu_fr_dt, 112) between d.observation_period_start_date and d.observation_period_end_date) as m, --추가
-	@ResultDatabaseSchema.@CONDITION_MAPPINGTABLE as n
+	cohort_cdm.CONDITION_MAPPINGTABLE as n
 where m.sick_sym=n.kcdcode
