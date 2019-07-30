@@ -126,4 +126,4 @@ GROUP BY hchk_year, person_id
  6. 일련번호 자동증가 비활성화시킴
 ***************************************/
 drop sequence master_seq;
-CREATE SEQUENCE master_seq; START WITH 1 increment by 0;
+CREATE SEQUENCE master_seq; NOCYCLE;
