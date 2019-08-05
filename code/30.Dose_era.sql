@@ -1,9 +1,9 @@
-/**************************************
+\/**************************************
  --encoding : UTF-8
  --Author: OHDSI
   
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
  
  --Description: OHDSI에서 생성한 dose_era 생성 쿼리
  --Generating Table: DOSE_ERA
@@ -12,7 +12,7 @@
 /**************************************
  1. dose_era 테이블 생성
 ***************************************/ 
- CREATE TABLE @ResultDatabaseSchema.DOSE_ERA (
+ CREATE TABLE cohort_cdm.DOSE_ERA (
      dose_era_id					INTEGER	 identity(1,1)    NOT NULL , 
      person_id						INTEGER     NOT NULL ,
      drug_concept_id				INTEGER   NOT NULL ,
@@ -37,7 +37,7 @@ SELECT
 	, d.drug_exposure_start_date
 	, d.days_supply AS days_supply
 	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
-INTO #cteDrugTarget 
+INTO cteDrugTarget 
 FROM drug_exposure d
 	 JOIN concept_ancestor ca ON ca.descendant_concept_id = d.drug_concept_id
 	 JOIN concept c ON ca.ancestor_concept_id = c.concept_id
@@ -52,7 +52,7 @@ SELECT
 	, unit_concept_id
 	, dose_value
 	, DATEADD( DAY, -30, event_date) AS end_date
-INTO #cteEndDates FROM
+INTO cteEndDates FROM
 (
 	SELECT
 		person_id
@@ -72,7 +72,7 @@ INTO #cteEndDates FROM
 			, dose_value
 			, drug_exposure_start_date AS event_date
 			, -1 AS event_type, ROW_NUMBER() OVER(PARTITION BY person_id, ingredient_concept_id, unit_concept_id, dose_value ORDER BY drug_exposure_start_date) AS start_ordinal
-		FROM #cteDrugTarget 
+		FROM cteDrugTarget 
 
 		UNION ALL
 
@@ -84,7 +84,7 @@ INTO #cteEndDates FROM
 			, DATEADD(DAY, 30, drug_exposure_end_date) AS drug_exposure_end_date
 			, 1 AS event_type
 			, NULL
-		FROM #cteDrugTarget
+		FROM cteDrugTarget
 	) RAWDATA
 ) e
 WHERE (2 * e.start_ordinal) - e.overall_ord = 0;
@@ -98,8 +98,8 @@ SELECT
 	, dt.dose_value
 	, dt.drug_exposure_start_date
 	, MIN(e.end_date) AS dose_era_end_date
-into #cteDoseEraEnds FROM #cteDrugTarget dt
-JOIN #cteEndDates e
+into cteDoseEraEnds FROM cteDrugTarget dt
+JOIN cteEndDates e
 ON dt.person_id = e.person_id AND dt.ingredient_concept_id = e.ingredient_concept_id AND dt.unit_concept_id = e.unit_concept_id AND dt.dose_value = e.dose_value AND e.end_date >= dt.drug_exposure_start_date
 GROUP BY
 	dt.drug_exposure_id
@@ -115,7 +115,7 @@ GROUP BY
  3. 2단계: dose_era에 데이터 입력
 ***************************************/ 
 
-INSERT INTO @ResultDatabaseSchema.dose_era (person_id, drug_concept_id, unit_concept_id, dose_value, dose_era_start_date, dose_era_end_date)
+INSERT INTO cohort_cdm.dose_era (person_id, drug_concept_id, unit_concept_id, dose_value, dose_era_start_date, dose_era_end_date)
 SELECT
 	person_id
 	, drug_concept_id
@@ -123,6 +123,6 @@ SELECT
 	, dose_value
 	, MIN(drug_exposure_start_date) AS dose_era_start_date
 	, dose_era_end_date
-	from #cteDoseEraEnds
+	from cteDoseEraEnds
 GROUP BY person_id, drug_concept_id, unit_concept_id, dose_value, dose_era_end_date
 ORDER BY person_id, drug_concept_id;
