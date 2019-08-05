@@ -2,8 +2,8 @@
  --encoding : UTF-8
  --Author: OHDSI
   
-@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
-@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
  
  --Description: OHDSI에서 생성한 drug_era 생성 쿼리
  --Generating Table: DRUG_ERA
@@ -12,7 +12,7 @@
 /**************************************
  1. drug_era 테이블 생성
 ***************************************/ 
-  CREATE TABLE @ResultDatabaseSchema.DRUG_ERA (
+  CREATE TABLE cohort_cdm.DRUG_ERA (
      drug_era_id					INTEGER	 identity(1,1)    NOT NULL , 
      person_id							INTEGER     NOT NULL ,
      drug_concept_id				INTEGER   NOT NULL ,
@@ -35,7 +35,7 @@ SELECT
 	, d.drug_exposure_start_date AS drug_exposure_start_date
 	, d.days_supply AS days_supply
 	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
-into #cteDrugPreTarget FROM drug_exposure d
+into cteDrugPreTarget FROM drug_exposure d
 JOIN concept_ancestor ca 
 ON ca.descendant_concept_id = d.drug_concept_id
 JOIN concept c 
@@ -53,7 +53,7 @@ SELECT
 	, days_supply
 	, drug_exposure_end_date
 	, datediff(day, drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure ---Calculates the days of exposure to the drug so at the end we can subtract the SUM of these days from the total days in the era.
-into #cteDrugTarget1 FROM  #cteDrugPreTarget;
+into cteDrugTarget1 FROM  cteDrugPreTarget;
 
 
 --------------------------------------------#cteEndDates1
@@ -61,7 +61,7 @@ SELECT
 	person_id
 	, ingredient_concept_id
 	, dateadd(day, -30, event_date) AS end_date -- unpad the end date
-into #cteEndDates1 FROM
+into cteEndDates1 FROM
 (
 	SELECT
 		person_id
@@ -78,7 +78,7 @@ into #cteEndDates1 FROM
 			, drug_exposure_start_date AS event_date
 			, -1 AS event_type
 			, ROW_NUMBER() OVER (PARTITION BY person_id, ingredient_concept_id ORDER BY drug_exposure_start_date) AS start_ordinal
-		FROM #cteDrugTarget1
+		FROM cteDrugTarget1
 	
 		UNION ALL
 	
@@ -89,7 +89,7 @@ into #cteEndDates1 FROM
 			, dateadd(day,30,drug_exposure_end_date)
 			, 1 AS event_type
 			, NULL
-		FROM #cteDrugTarget1
+		FROM cteDrugTarget1
 	) RAWDATA
 ) e
 WHERE (2 * e.start_ordinal) - e.overall_ord = 0;
@@ -102,8 +102,8 @@ SELECT
 	   , dt.drug_exposure_start_date
 	   , MIN(e.end_date) AS drug_era_end_date
 	   , dt.days_of_exposure AS days_of_exposure
-into #cteDrugExposureEnds1 FROM #cteDrugTarget1 dt
-						JOIN #cteEndDates1 e 
+into cteDrugExposureEnds1 FROM cteDrugTarget1 dt
+						JOIN cteEndDates1 e 
 						ON dt.person_id = e.person_id AND 
 						dt.ingredient_concept_id = e.ingredient_concept_id 
 						AND e.end_date >= dt.drug_exposure_start_date
@@ -119,7 +119,7 @@ GROUP BY
  3. 2단계: drug_era에 데이터 입력
 ***************************************/ 
 
-INSERT INTO @ResultDatabaseSchema.drug_era (person_id, drug_concept_id, drug_era_start_date, drug_era_end_date, drug_exposure_count, gap_days)
+INSERT INTO cohort_cdm.drug_era (person_id, drug_concept_id, drug_era_start_date, drug_era_end_date, drug_exposure_count, gap_days)
 SELECT
 	person_id
 	, drug_concept_id
@@ -130,6 +130,6 @@ SELECT
 	/*, EXTRACT(EPOCH FROM (drug_era_end_date - MIN(drug_exposure_start_date)) - SUM(days_of_exposure))/86400 AS gap_day
 			  ---dividing by 86400 puts the integer in the "units" of days.
 			  ---There are no actual units on this, it is just an integer, but we want it to represent days and dividing by 86400 does that.*/
-FROM #cteDrugExposureEnds1
+FROM cteDrugExposureEnds1
 GROUP BY person_id, drug_concept_id, drug_era_end_date
 ORDER BY person_id, drug_concept_id;
