@@ -33,7 +33,6 @@ CREATE TABLE  cohort_cdm.DEATH
 	primary key (person_id)
 );
 
-
 -- 임시 death mapping table
 create global temporary table death_mapping
 (
@@ -94,6 +93,7 @@ INTO death_mapping VALUES ('T80-T88','의료 행위에 대한 합병증', 442019
 INTO death_mapping VALUES ('T90-T98','기타 후유증', 443403, 'Sequela')
 select 1 from dual;
 
+select * from death_mapping;
 /**************************************
  2. 데이터 입력 및 확인
 ***************************************/  
@@ -102,7 +102,7 @@ select 1 from dual;
 INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
-	to_char(SYSDATE||DAY||DATEPART(DD,SYSDATE||MONTH,1,to_char(a.dth_ym||'01',23))),SYSDATE||MONTH,1,to_char(a.dth_ym||'01',23))),23) as death_date,
+	to_char(SYSDATE - 'DATEPART' DAY,(SYSDATE - 'DD' MONTH,1,to_char(a.dth_ym || '01',23)),SYSDATE - MONTH,1,to_char(a.dth_ym || '01',23)),23 AS DEATH_DATE,
 	38003618 as death_type_concept_id,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
@@ -117,14 +117,14 @@ WHERE a.dth_ym IS NOT NULL and a.dth_ym != '';
 INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
-	convert(VARCHAR, STND_Y + '1231', 23) AS DEATH_DATE,
+	to_char(STND_Y || '1231', 23) AS DEATH_DATE,
 	38003618 as death_type_concept_id,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
 	NULL as cause_source_concept_id
-FROM cohort_cdm.NHID_JK a left join #death_mapping b
+FROM cohort_cdm.NHID_JK a left join death_mapping b
 on a.dth_code1=b.kcdcode
-WHERE a.dth_ym = '' and a.DTH_CODE1 != ''
+WHERE a.dth_ym = '' and a.DTH_CODE1 != '';
 
 
 --임시매핑테이블 삭제
