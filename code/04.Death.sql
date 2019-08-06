@@ -33,6 +33,7 @@ CREATE TABLE  cohort_cdm.DEATH
 	primary key (person_id)
 );
 
+
 -- 임시 death mapping table
 create global temporary table death_mapping
 (
@@ -102,30 +103,39 @@ select * from death_mapping;
 INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
-	to_char(SYSDATE - 'DATEPART' DAY,(SYSDATE - 'DD' MONTH,1,to_char(a.dth_ym || '01',23)),SYSDATE - MONTH,1,to_char(a.dth_ym || '01',23)),23 AS DEATH_DATE,
+	to_char(last_day(to_date(dth_ym||'01','yyyymmdd')),'yyyymmdd') as death_date,
 	38003618 as death_type_concept_id,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
 	NULL as cause_source_concept_id
-FROM cohort_cdm.NHID_JK a left join death_mapping b
+from
+    (select STND_Y, PERSON_ID, SEX, AGE_GROUP, DTH_YM, rtrim(dth_code1) as DTH_CODE1, DTH_CODE2, SIDO, SGG, IPSN_TYPE_CD, CTRB_PT_TYPE_CD, DFAB_GRD_CD, DFAB_PTN_CD, DFAB_REG_YM from cohort_cdm.NHID_JK) a
+        left join death_mapping b
 on a.dth_code1=b.kcdcode
-WHERE a.dth_ym IS NOT NULL and a.dth_ym != '';
+WHERE a.dth_ym IS NOT NULL;
 
 
+
+/*select * FROM 
+(select rtrim(dth_code1) as aa from cohort_cdm.NHID_JK where dth_code1 is not null and dth_code1 = 'J46') a 
+left join 
+(select kcdcode as bb from death_mapping where kcdcode = 'J46') b
+on a.aa=b.bb; */
 
 --날짜 없는 경우 해당 년의 12월 31일로 death 정의
 INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
-	to_char(STND_Y || '1231', 23) AS DEATH_DATE,
+	to_char(STND_Y || '1231' ,23) AS death_date,
 	38003618 as death_type_concept_id,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
 	NULL as cause_source_concept_id
-FROM cohort_cdm.NHID_JK a left join death_mapping b
+from
+    (select STND_Y, PERSON_ID, SEX, AGE_GROUP, DTH_YM, rtrim(dth_code1) as DTH_CODE1, DTH_CODE2, SIDO, SGG, IPSN_TYPE_CD, CTRB_PT_TYPE_CD, DFAB_GRD_CD, DFAB_PTN_CD, DFAB_REG_YM from cohort_cdm.NHID_JK) a
+        left join death_mapping b
 on a.dth_code1=b.kcdcode
 WHERE a.dth_ym = '' and a.DTH_CODE1 != '';
-
 
 --임시매핑테이블 삭제
 drop table death_mapping;
