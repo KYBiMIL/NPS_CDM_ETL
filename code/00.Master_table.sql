@@ -1,5 +1,5 @@
 /**************************************
- 
+ --Oracle version: Oracle Database 11g Enterprise Edition Release 11.2.0.4.0 - 64bit Production
  --Author: 고인석
  --Date: 2019.08.09
  
