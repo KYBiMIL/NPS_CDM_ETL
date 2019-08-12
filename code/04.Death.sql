@@ -126,7 +126,7 @@ on a.aa=b.bb; */
 INSERT INTO cohort_cdm.DEATH (person_id, death_date, death_type_concept_id, cause_concept_id, 
 cause_source_value, cause_source_concept_id)
 SELECT a.person_id AS PERSON_ID,
-	to_char(STND_Y || '1231' ,23) AS death_date,
+	STND_Y || '1231' AS death_date,
 	38003618 as death_type_concept_id,
 	b.concept_id as cause_concept_id,
 	dth_code1 as cause_source_value,
