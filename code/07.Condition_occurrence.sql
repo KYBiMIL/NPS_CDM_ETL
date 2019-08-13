@@ -32,6 +32,21 @@ CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE (
 	 condition_source_concept_id	VARCHAR(50)
 );
 
+create global temporary table cohort_cdm.CONDITTION_OCCURRENCE (
+    condition_occurrence_id		BIGINT			PRIMARY KEY, 
+     person_id						INTEGER			NOT NULL , 
+     condition_concept_id			INTEGER			NOT NULL , 
+     condition_start_date			DATE			NOT NULL , 
+     condition_end_date				DATE, 
+     condition_type_concept_id		INTEGER			NOT NULL , 
+     stop_reason					VARCHAR(20), 
+     provider_id					INTEGER, 
+     visit_occurrence_id			BIGINT, 
+     condition_source_value			VARCHAR(50),
+	 condition_source_concept_id	VARCHAR(50)
+)
+on commit preserve rows;
+
 
 
 /**************************************
@@ -52,11 +67,11 @@ INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
 select 
-	convert(bigint, convert(varchar, m.master_seq) + convert(varchar, ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
+	convert(bigint, to_char(m.master_seq) || to_char(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.concept_id as condition_concept_id,
-	convert(date, m.recu_fr_dt, 112) as condition_start_date,
+	to_date(m.recu_fr_dt, 112) as condition_start_date,
 	m.visit_end_date as condition_end_date,
 	m.sick_order as condition_type_concept_id,
 	null as stop_reason,
@@ -67,9 +82,9 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt, 112)) 
-			when b.form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt, 112))
-			else convert(date, b.recu_fr_dt, 112)
+		case when b.form_cd in ('02', '04', '06', '07', '10', '12') then last_day('yyyymmdd', to_date(b.recu_fr_dt, 112)) 
+			when b.form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') then last_day('yyyymmdd', to_date(b.recu_fr_dt, 112))
+			else to_date(b.recu_fr_dt, 112)
 		end as visit_end_date,
 		c.sick_sym,
 		case when c.sick_sym=b.main_sick then '44786627' --primary condition
@@ -86,6 +101,6 @@ from (
 	and a.key_seq=c.key_seq
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --추가
-	and convert(date, c.recu_fr_dt, 112) between d.observation_period_start_date and d.observation_period_end_date) as m, --추가
+	and to_date(c.recu_fr_dt, 112) between d.observation_period_start_date and d.observation_period_end_date) as m, --추가
 	cohort_cdm.CONDITION_MAPPINGTABLE as n
-where m.sick_sym=n.kcdcode
+where m.sick_sym=n.kcdcode;
