@@ -17,7 +17,7 @@
 /**************************************
  1. 테이블 생성
 ***************************************/ 
-CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (                 --데이터 유형이 부적합
+CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (                
 	visit_occurrence_id	bigint	primary key,
 	person_id			integer	not null,
 	visit_concept_id	integer	not null,
@@ -32,7 +32,22 @@ CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (                 --데이터 유형이
 	visit_source_concept_id	integer
 );
 
-
+create global temporary table cohort_cdm.VISIT_OCCURRENCE
+(
+    visit_occurrence_id	bigint primary key,
+	person_id integer not null,
+	visit_concept_id integer not null,
+	visit_start_date date not null,
+	visit_start_time time,
+	visit_end_date date not null,
+	visit_end_time time,
+	visit_type_concept_id integer not null,
+	provider_id integer,
+	care_site_id integer,
+	visit_source_value varchar(50),
+	visit_source_concept_id	integer
+)
+on commit preserve rows;
 
 /**************************************
  2. 데이터 입력
@@ -51,11 +66,11 @@ select
 		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type not in ('11', '21', '31') then 9202 --외래 + 외래
 		else 0
 	end as visit_concept_id,
-	convert(date, recu_fr_dt, 112) as visit_start_date,
+	to_date(recu_fr_dt, 112) as visit_start_date,
 	null as visit_start_time,
-	case when form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112)) 
-		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112))
-		else convert(date, recu_fr_dt, 112)
+	case when form_cd in ('02', '04', '06', '07', '10', '12') then last_day('yyyymmdd', to_date(recu_fr_dt, 112)) 
+		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then last_day('yyyymmdd', to_date(recu_fr_dt, 112))              --DATEADD(DAY, vscn-1
+		else to_date(recu_fr_dt, 112)
 	end as visit_end_date,
 	null as visit_end_time,
 	44818517 as visit_type_concept_id,
@@ -76,9 +91,9 @@ select
 	b.master_seq as visit_concept_id,
 	a.person_id as person_id,
 	9202 as visit_concept_id,
-	cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as visit_start_date,
+	cast(to_char(a.hchk_year ||'0101', 23)as date) as visit_start_date,
 	null as visit_start_time,
-	cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as visit_end_date,
+	cast(to_char(a.hchk_year ||'0101', 23)as date) as visit_end_date,
 	null as visit_end_time,
 	44818517 as visit_type_concept_id,
 	null as provider_id,
