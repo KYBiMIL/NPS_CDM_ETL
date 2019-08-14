@@ -1,15 +1,15 @@
 /**************************************
  --encoding : UTF-8
- --Author: 조재형
- --Date: 2017.02.06
+ --Author: 고인석
+ --Date: 2019.08.14
  
  cohort_cdm : DB containing NHIS National Sample cohort DB
- NHID_JK: JK table in NHIS NSC
- NHID_20T: 20 table in NHIS NSC
- NHID_30T: 30 table in NHIS NSC
- NHID_40T: 40 table in NHIS NSC
- NHID_60T: 60 table in NHIS NSC
- NHID_GJ: GJ table in NHIS NSC
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  --Description: DEATH 테이블 생성
 			   1) 표본코호트DB에는 사망한 날짜가 년도, 월까지 표시가 되기 때문에 해당 월의 1일로 사망일 정의
 			   2) 표본코호트DB는 사망한 후에도 진료기록이 있는 경우가 있음을 고려
@@ -135,7 +135,7 @@ from
     (select STND_Y, PERSON_ID, SEX, AGE_GROUP, DTH_YM, rtrim(dth_code1) as DTH_CODE1, DTH_CODE2, SIDO, SGG, IPSN_TYPE_CD, CTRB_PT_TYPE_CD, DFAB_GRD_CD, DFAB_PTN_CD, DFAB_REG_YM from cohort_cdm.NHID_JK) a
         left join death_mapping b
 on a.dth_code1=b.kcdcode
-WHERE a.dth_ym = '' and a.DTH_CODE1 != '';
+WHERE a.dth_ym IS NOT NULL;
 
 --임시매핑테이블 삭제
 drop table death_mapping;
