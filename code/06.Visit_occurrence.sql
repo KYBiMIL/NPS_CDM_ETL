@@ -18,13 +18,13 @@
  1. 테이블 생성
 ***************************************/ 
 CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (                
-	visit_occurrence_id	bigint	primary key,
+	visit_occurrence_id number primary key,
 	person_id			number	not null,
 	visit_concept_id	number	not null,
 	visit_start_date	date	not null,
-	visit_start_time	time,
+	visit_start_time	date,
 	visit_end_date		date	not null,
-	visit_end_time		time,
+	visit_end_time		date,
 	visit_type_concept_id	number	not null,
 	provider_id			number,
 	care_site_id		number,
@@ -32,22 +32,26 @@ CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (
 	visit_source_concept_id	number
 );
 
+/***
+임시 테이블 생성
+***/
 create global temporary table cohort_cdm.VISIT_OCCURRENCE
 (
-    visit_occurrence_id	bigint primary key,
-	person_id number not null,
-	visit_concept_id number not null,
-	visit_start_date date not null,
-	visit_start_time time,
-	visit_end_date date not null,
-	visit_end_time time,
-	visit_type_concept_id number not null,
-	provider_id number,
-	care_site_id number,
-	visit_source_value varchar(50),
-	visit_source_concept_id	number
+    visit_occurrence_id    number primary key,
+    person_id number not null,
+    visit_concept_id number not null,
+    visit_start_date date not null,
+    visit_start_time date,
+    visit_end_date date not null,
+    visit_end_time date,
+    visit_type_concept_id number not null,
+    provider_id number,
+    care_site_id number,
+    visit_source_value varchar(50),
+    visit_source_concept_id    number
 )
 on commit preserve rows;
+
 
 /**************************************
  2. 데이터 입력
@@ -66,11 +70,11 @@ select
 		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type not in ('11', '21', '31') then 9202 --외래 + 외래
 		else 0
 	end as visit_concept_id,
-	to_date(recu_fr_dt, 112) as visit_start_date,
+	convert(date, recu_fr_dt, 112) as visit_start_date,
 	null as visit_start_time,
-	case when form_cd in ('02', '04', '06', '07', '10', '12') then last_day('yyyymmdd', to_date(recu_fr_dt, 112)) 
-		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then last_day('yyyymmdd', to_date(recu_fr_dt, 112))              --DATEADD(DAY, vscn-1
-		else to_date(recu_fr_dt, 112)
+	case when form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112)) 
+		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112))
+		else convert(date, recu_fr_dt, 112)
 	end as visit_end_date,
 	null as visit_end_time,
 	44818517 as visit_type_concept_id,
