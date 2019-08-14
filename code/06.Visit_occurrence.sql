@@ -19,33 +19,33 @@
 ***************************************/ 
 CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (                
 	visit_occurrence_id	bigint	primary key,
-	person_id			integer	not null,
-	visit_concept_id	integer	not null,
+	person_id			number	not null,
+	visit_concept_id	number	not null,
 	visit_start_date	date	not null,
 	visit_start_time	time,
 	visit_end_date		date	not null,
 	visit_end_time		time,
-	visit_type_concept_id	integer	not null,
-	provider_id			integer,
-	care_site_id		integer,
+	visit_type_concept_id	number	not null,
+	provider_id			number,
+	care_site_id		number,
 	visit_source_value	varchar(50),
-	visit_source_concept_id	integer
+	visit_source_concept_id	number
 );
 
 create global temporary table cohort_cdm.VISIT_OCCURRENCE
 (
     visit_occurrence_id	bigint primary key,
-	person_id integer not null,
-	visit_concept_id integer not null,
+	person_id number not null,
+	visit_concept_id number not null,
 	visit_start_date date not null,
 	visit_start_time time,
 	visit_end_date date not null,
 	visit_end_time time,
-	visit_type_concept_id integer not null,
-	provider_id integer,
-	care_site_id integer,
+	visit_type_concept_id number not null,
+	provider_id number,
+	care_site_id number,
 	visit_source_value varchar(50),
-	visit_source_concept_id	integer
+	visit_source_concept_id	number
 )
 on commit preserve rows;
 
