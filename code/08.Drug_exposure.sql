@@ -23,6 +23,12 @@ NHID_GJ: GJ table in NHIS NSC
  1. 사전 준비
 ***************************************/ 
 -- 1) 30T의 항/목 코드 현황 체크매핑
+
+create global temporary table cohort_cdm.DRUG_MAPPINGTABLE
+(
+)
+on commit preserve rows;
+
 select clause_cd, item_cd, count(clause_cd)
 from cohort_cdm.NHID_30T
 group by clause_cd, item_cd
@@ -34,19 +40,19 @@ group by clause_cd, item_cd
 -- 1일 투여량 또는 실시 횟수
 select dd_mqty_exec_freq, count(dd_mqty_exec_freq) as cnt          
 from cohort_cdm.NHID_30T
-where dd_mqty_exec_freq is not null and ISNUMERIC(dd_mqty_exec_freq) = 0     --ISNUMERIC:부적합한 식별자
+where dd_mqty_exec_freq is not null and TO_NUMBER(dd_mqty_exec_freq) = 1
 group by dd_mqty_exec_freq
 
 -- 총투여일수 또는 실시횟수
 select mdcn_exec_freq, count(mdcn_exec_freq) as cnt
 from cohort_cdm.NHID_30T
-where mdcn_exec_freq is not null and ISNUMERIC(mdcn_exec_freq) = 0
+where mdcn_exec_freq is not null and TO_NUMBER(mdcn_exec_freq) = 1
 group by mdcn_exec_freq
 
 -- 1회 투약량
 select dd_mqty_freq, count(dd_mqty_freq) as cnt
 from cohort_cdm.NHID_30T
-where dd_mqty_freq is not null and ISNUMERIC(dd_mqty_freq) = 0
+where dd_mqty_freq is not null and TO_NUMBER(dd_mqty_freq) = 1
 group by dd_mqty_freq
 
 --> 결과는 "08. 참고) 30T, 60T의 코드 분석.xlsx" 참고
@@ -56,19 +62,19 @@ group by dd_mqty_freq
 -- 1회 투약량
 select dd_mqty_freq, count(dd_mqty_freq) as cnt
 from cohort_cdm.NHID_60T
-where dd_mqty_freq is not null and ISNUMERIC(dd_mqty_freq) = 0
+where dd_mqty_freq is not null and TO_NUMBER(dd_mqty_freq) = 1
 group by dd_mqty_freq
 
 -- 1일 투약량
 select dd_exec_freq, count(dd_exec_freq) as cnt
 from cohort_cdm.NHID_60T
-where dd_exec_freq is not null and ISNUMERIC(dd_exec_freq) = 0
+where dd_exec_freq is not null and TO_NUMBER(dd_exec_freq) = 1
 group by dd_exec_freq
 
 -- 총투여일수 또는 실시횟수
 select mdcn_exec_freq, count(mdcn_exec_freq) as cnt
 from cohort_cdm.NHID_60T
-where mdcn_exec_freq is not null and ISNUMERIC(mdcn_exec_freq) = 0
+where mdcn_exec_freq is not null and TO_NUMBER(mdcn_exec_freq) = 1
 group by mdcn_exec_freq
 
 --> 결과는 "08. 참고) 30T, 60T의 코드 분석.xlsx" 참고
@@ -76,7 +82,7 @@ group by mdcn_exec_freq
 
 -- 4) 매핑 테이블의 약코드 1:N 건수 체크
 select source_code, count(source_code)
-from cohort_cdm.DRUG_MAPPINGTABLE
+from cohort_cdm.DRUG_MAPPINGTABLE                 
 group by source_code
 having count(source_code)>1
 --> 1:N 매핑 약코드 없음
