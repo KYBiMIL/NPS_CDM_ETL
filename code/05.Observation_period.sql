@@ -21,8 +21,16 @@
 	3) 사망 이후 가지는 자격 제외
 ***************************************/ 
 
-
 -- step 1
+create global temporary table observation_period_temp1
+(
+KCDCODE VARCHAR(20),
+NAME varchar(255),
+CONCEPT_ID INTEGER, 
+CONCEPT_NAME varchar(255)
+)
+on commit preserve rows;
+
 create table observation_period_temp1 as 
 select
       a.person_id as person_id, 
