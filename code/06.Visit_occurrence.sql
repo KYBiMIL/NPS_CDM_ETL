@@ -1,6 +1,6 @@
 /**************************************
  --encoding : UTF-8
- --Author: 고인석
+ --Author: 고인석                                           **미확인 상태
  --Date: 2017.01.26
  
  @cohort_cdm : DB containing NHIS National Sample cohort DB
@@ -31,6 +31,8 @@ CREATE TABLE cohort_cdm.VISIT_OCCURRENCE (
 	visit_source_value	varchar(50),
 	visit_source_concept_id	number
 );
+
+-- drop table cohort_cdm.VISIT_OCCURRENCE;
 
 /***
 임시 테이블 생성
@@ -70,11 +72,11 @@ select
 		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type not in ('11', '21', '31') then 9202 --외래 + 외래
 		else 0
 	end as visit_concept_id,
-	convert(date, recu_fr_dt, 112) as visit_start_date,
+	TO_DATE(DATE, recu_fr_dt, 112) as visit_start_date,
 	null as visit_start_time,
-	case when form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112)) 
-		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, vscn-1, convert(date, recu_fr_dt, 112))
-		else convert(date, recu_fr_dt, 112)
+	case when form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, vscn-1, TO_DATE(DATE, recu_fr_dt, 112)) 
+		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, vscn-1, TO_DATE(DATE, recu_fr_dt, 112))
+		else TO_DATE(DATE, recu_fr_dt, 112)
 	end as visit_end_date,
 	null as visit_end_time,
 	44818517 as visit_type_concept_id,
