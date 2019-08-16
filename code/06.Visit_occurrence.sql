@@ -72,20 +72,19 @@ select
 		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type not in ('11', '21', '31') then 9202 --외래 + 외래
 		else 0
 	end as visit_concept_id,
-	TO_DATE(DATE, recu_fr_dt, 112) as visit_start_date,
+	TO_DATE(recu_fr_dt, 112) as visit_start_date,
 	null as visit_start_time,
-	case when form_cd in ('02', '04', '06', '07', '10', '12') then DATEADD(DAY, vscn-1, TO_DATE(DATE, recu_fr_dt, 112)) 
-		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then DATEADD(DAY, vscn-1, TO_DATE(DATE, recu_fr_dt, 112))
-		else TO_DATE(DATE, recu_fr_dt, 112)
+	case when form_cd in ('02', '04', '06', '07', '10', '12') then TO_DATE(recu_fr_dt, 'yyyymmdd') + vscn - 1 
+		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then TO_DATE(recu_fr_dt, 'yyyymmdd') + vscn - 1
+		else TO_DATE(recu_fr_dt, 112)
 	end as visit_end_date,
-	null as visit_end_time,
+	null as to_number(visit_end_time),
 	44818517 as visit_type_concept_id,
 	null as provider_id,
 	ykiho_id as care_site_id,
 	key_seq as visit_source_value,
 	null as visit_source_concept_id
 from cohort_cdm.NHID_20T;
-
 
 --건강검진 INSERT
 insert into cohort_cdm.VISIT_OCCURRENCE (
