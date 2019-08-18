@@ -19,7 +19,7 @@ CONDITION_MAPPINGTABLE : mapping table between KCD and SNOMED-CT
  1. 테이블 생성
 ***************************************/ 
 CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE ( 
-     condition_occurrence_id		BIGINT			PRIMARY KEY, 
+     condition_occurrence_id		number			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL , 
      condition_concept_id			INTEGER			NOT NULL , 
      condition_start_date			DATE			NOT NULL , 
@@ -27,13 +27,13 @@ CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE (
      condition_type_concept_id		INTEGER			NOT NULL , 
      stop_reason					VARCHAR(20), 
      provider_id					INTEGER, 
-     visit_occurrence_id			BIGINT, 
+     visit_occurrence_id			number, 
      condition_source_value			VARCHAR(50),
 	 condition_source_concept_id	VARCHAR(50)
 );
 
 create global temporary table cohort_cdm.CONDITTION_OCCURRENCE (
-    condition_occurrence_id		BIGINT			PRIMARY KEY, 
+    condition_occurrence_id		    number			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL , 
      condition_concept_id			INTEGER			NOT NULL , 
      condition_start_date			DATE			NOT NULL , 
@@ -41,7 +41,7 @@ create global temporary table cohort_cdm.CONDITTION_OCCURRENCE (
      condition_type_concept_id		INTEGER			NOT NULL , 
      stop_reason					VARCHAR(20), 
      provider_id					INTEGER, 
-     visit_occurrence_id			BIGINT, 
+     visit_occurrence_id			number, 
      condition_source_value			VARCHAR(50),
 	 condition_source_concept_id	VARCHAR(50)
 )
@@ -67,7 +67,7 @@ INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
 select 
-	convert(bigint, to_char(m.master_seq) || to_char(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
+	to_number( to_char(m.master_seq) || to_char(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.concept_id as condition_concept_id,
