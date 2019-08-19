@@ -44,11 +44,11 @@ author:  jung hyun byun
 Standardized vocabulary
 ************************/
 
-CREATE UNIQUE CLUSTERED INDEX idx_concept_concept_id ON @ResultDatabaseSchema.concept (concept_id ASC);
-CREATE INDEX idx_concept_code ON @ResultDatabaseSchema.concept (concept_code ASC);
-CREATE INDEX idx_concept_vocabluary_id ON @ResultDatabaseSchema.concept (vocabulary_id ASC);
-CREATE INDEX idx_concept_domain_id ON @ResultDatabaseSchema.concept (domain_id ASC);
-CREATE INDEX idx_concept_class_id ON @ResultDatabaseSchema.concept (concept_class_id ASC);
+CREATE UNIQUE CLUSTERED INDEX idx_concept_concept_id ON cohort_cdm.concept (concept_id ASC);
+CREATE INDEX idx_concept_code ON cohort_cdm.concept (concept_code ASC);
+CREATE INDEX idx_concept_vocabluary_id ON cohort_cdm.concept (vocabulary_id ASC);
+CREATE INDEX idx_concept_domain_id ON cohort_cdm.concept (domain_id ASC);
+CREATE INDEX idx_concept_class_id ON cohort_cdm.concept (concept_class_id ASC);
 
 
 CREATE UNIQUE CLUSTERED INDEX idx_vocabulary_vocabulary_id ON cohort_cdm.vocabulary (vocabulary_id ASC);
