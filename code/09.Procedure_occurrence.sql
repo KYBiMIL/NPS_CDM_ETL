@@ -89,11 +89,12 @@ CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE (
      procedure_source_value			VARCHAR(50)		NULL,
 	 procedure_source_concept_id	INTEGER			NULL,
 	 qualifier_source_value			VARCHAR(50)		NULL
-    )
-;
+    );
 
-CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE ( 
-     procedure_occurrence_id		NUMBER			PRIMARY KEY, 
+
+create global temporary table cohort_cdm.PROCEDURE_OCCURRENCE
+(
+	procedure_occurrence_id		NUMBER			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL, 
      procedure_concept_id			INTEGER			NOT NULL, 
      procedure_date					DATE			NOT NULL, 
@@ -105,7 +106,9 @@ CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE (
      procedure_source_value			VARCHAR(50)		NULL,
 	 procedure_source_concept_id	INTEGER			NULL,
 	 qualifier_source_value			VARCHAR(50)		NULL
-    );
+	
+)
+on commit preserve rows;
 
 /**************************************
  3. 30T를 이용하여 데이터 입력
