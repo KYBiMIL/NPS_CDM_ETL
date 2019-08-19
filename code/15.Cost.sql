@@ -25,7 +25,7 @@ DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
 ***************************************/ 
 CREATE TABLE cohort_cdm.COST (
 	cost_id	bigint	primary key,
-	cost_event_id	bigint	not null,
+	cost_event_id	NUMBER	not null,
 	cost_domain_id	varchar(20)	not null,
 	cost_type_concept_id	integer	not null,
 	currency_concept_id	integer,
@@ -40,13 +40,40 @@ CREATE TABLE cohort_cdm.COST (
 	paid_by_primary	float,
 	paid_ingredient_cost	float,
 	paid_dispensing_fee	float,
-	payer_plan_period_id	bigint,
+	payer_plan_period_id	NUMBER,
 	amount_allowed	float,
 	revenue_code_concept_id	integer,
 	drg_concept_id	integer,
 	revenue_code_source_value	varchar(50),
 	drg_source_value	varchar(50)
 );
+
+create global temporary table cohort_cdm.COST
+(
+    cost_id	bigint	primary key,
+	cost_event_id	NUMBER	not null,
+	cost_domain_id	varchar(20)	not null,
+	cost_type_concept_id	integer	not null,
+	currency_concept_id	integer,
+	total_charge	float,
+	total_cost	float,
+	total_paid	float,
+	paid_by_payer	float,
+	paid_by_patient	float,
+	paid_patient_copay	float,
+	paid_patient_coinsurance	float,
+	paid_patient_deductiable	float,
+	paid_by_primary	float,
+	paid_ingredient_cost	float,
+	paid_dispensing_fee	float,
+	payer_plan_period_id	NUMBER,
+	amount_allowed	float,
+	revenue_code_concept_id	integer,
+	drg_concept_id	integer,
+	revenue_code_source_value	varchar(50),
+	drg_source_value	varchar(50)
+)
+on commit preserve rows; 
 
 
 /**************************************
@@ -83,7 +110,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, a.person_id) + left(convert(varchar, visit_start_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char(a.person_id) || left(to_char(visit_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -123,7 +150,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char(b.person_id) || left(to_char(a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -165,7 +192,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char(b.person_id) || left(to_char(a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -211,7 +238,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.procedure_date, 112), 4)) as payer_plan_period_id,
+	to_NUMBER(to_char(b.person_id) || left(to_char(a.procedure_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -251,7 +278,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.procedure_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char(b.person_id) || left(to_char(a.procedure_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -295,7 +322,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char(b.person_id) || left(to_char(a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -337,7 +364,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	to_number(to_char( b.person_id) || left(to_char(a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
