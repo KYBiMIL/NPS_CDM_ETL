@@ -77,7 +77,7 @@ and a.key_seq=c.key_seq
  2. 테이블 생성
 ***************************************/ 
 CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE ( 
-     procedure_occurrence_id		BIGINT			PRIMARY KEY, 
+     procedure_occurrence_id	NUMBER			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL, 
      procedure_concept_id			INTEGER			NOT NULL, 
      procedure_date					DATE			NOT NULL, 
@@ -85,7 +85,7 @@ CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE (
 	 modifier_concept_id			INTEGER			NULL,
 	 quantity						INTEGER			NULL, 
      provider_id					INTEGER			NULL, 
-     visit_occurrence_id			BIGINT			NULL, 
+     visit_occurrence_id			NUMBER			NULL, 
      procedure_source_value			VARCHAR(50)		NULL,
 	 procedure_source_concept_id	INTEGER			NULL,
 	 qualifier_source_value			VARCHAR(50)		NULL
