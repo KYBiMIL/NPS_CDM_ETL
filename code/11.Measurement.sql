@@ -64,10 +64,24 @@ CREATE TABLE observation_mapping
 	 observation_unit_concept_id	NUMBER						NULL ,
 	 value_as_concept_id			NUMBER						NULL ,
 	 value_as_number				float						NULL 
-	)
-;
+	);
+    
+create global temporary table observation_mapping
+(
+     meas_type						varchar(50)					NULL , 
+     id_value						varchar(50)					NULL ,
+     answer							NUMBER						NULL ,
+     observation_concept_id			NUMBER						NULL ,
+	 observation_type_concept_id	NUMBER						NULL ,
+	 observation_unit_concept_id	NUMBER						NULL ,
+	 value_as_concept_id			NUMBER						NULL ,
+	 value_as_number				float						NULL 
+)
+on commit preserve rows;
 	
 -- insert mapping data
+select * FROM observation_mapping; 
+
 INSERT ALL
 INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 1, 4058267, 44814721, null, null, null)
 INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 2, 43021368, 44814721, null, null, null)
@@ -304,6 +318,20 @@ CREATE TABLE observation_mapping09
 	)
 ;
 
+create global temporary table observation_mapping09
+(
+     meas_type						varchar(50)					NULL , 
+     id_value						varchar(50)					NULL ,
+     answer							NUMBER						NULL ,
+     observation_concept_id			NUMBER						NULL ,
+	 observation_type_concept_id	NUMBER						NULL ,
+	 observation_unit_concept_id	NUMBER						NULL ,
+	 value_as_concept_id			NUMBER						NULL ,
+	 value_as_number				float						NULL 
+)
+on commit preserve rows;
+
+INSERT ALL
 INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	1,		40771103,		44818704,	45881908,		NULL,		0)
 INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	2,		40771103,		44818704,	45881908,		NULL,		1)
 INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	3,		40771103,		44818704,	45881908,		NULL,		2)
@@ -314,6 +342,7 @@ INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_conc
 INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	8,		40771103,		44818704,	45881908,		NULL,		7)
 INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	0,		3037705,		44818704,	4045131,		NULL,		NULL) 
 
+select * from dual;
 
 
 INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
@@ -394,8 +423,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('DRNK_HABIT_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
-			and c.source_table like 'GJT'
-;
+			and c.source_table like 'GJT';
 
 
 
