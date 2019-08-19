@@ -92,6 +92,20 @@ CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE (
     )
 ;
 
+CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE ( 
+     procedure_occurrence_id		NUMBER			PRIMARY KEY, 
+     person_id						INTEGER			NOT NULL, 
+     procedure_concept_id			INTEGER			NOT NULL, 
+     procedure_date					DATE			NOT NULL, 
+     procedure_type_concept_id		INTEGER			NOT NULL,
+	 modifier_concept_id			INTEGER			NULL,
+	 quantity						INTEGER			NULL, 
+     provider_id					INTEGER			NULL, 
+     visit_occurrence_id			NUMBER			NULL, 
+     procedure_source_value			VARCHAR(50)		NULL,
+	 procedure_source_concept_id	INTEGER			NULL,
+	 qualifier_source_value			VARCHAR(50)		NULL
+    );
 
 /**************************************
  3. 30T를 이용하여 데이터 입력
@@ -101,13 +115,13 @@ INSERT INTO cohort_cdm.PROCEDURE_OCCURRENCE
 	modifier_concept_id, quantity, provider_id, visit_occurrence_id, procedure_source_value, 
 	procedure_source_concept_id, qualifier_source_value)
 SELECT 
-	convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as procedure_occurrence_id,
+	to_number(to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as procedure_occurrence_id,
 	a.person_id as person_id,
 	CASE WHEN b.concept_id IS NOT NULL THEN b.concept_id ELSE 0 END as procedure_concept_id,
-	CONVERT(VARCHAR, a.recu_fr_dt, 112) as procedure_date,
+	to_char(a.recu_fr_dt, 112) as procedure_date,
 	45756900 as procedure_type_concept_id,
 	NULL as modifier_concept_id,
-	convert(float, a.dd_mqty_exec_freq) * convert(float, a.mdcn_exec_freq) * convert(float, a.dd_mqty_freq) as quantity,
+	to_float(a.dd_mqty_exec_freq) * to_float(a.mdcn_exec_freq) * to_float(a.dd_mqty_freq) as quantity,
 	NULL as provider_id,
 	a.key_seq as visit_occurrence_id,
 	a.div_cd as procedure_source_value,
@@ -133,13 +147,13 @@ INSERT INTO cohort_cdm.PROCEDURE_OCCURRENCE
 	modifier_concept_id, quantity, provider_id, visit_occurrence_id, procedure_source_value, 
 	procedure_source_concept_id, qualifier_source_value)
 SELECT 
-	convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as procedure_occurrence_id,
+	to_number( to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as procedure_occurrence_id,
 	a.person_id as person_id,
 	CASE WHEN b.concept_id IS NOT NULL THEN b.concept_id ELSE 0 END as procedure_concept_id,
-	CONVERT(VARCHAR, a.recu_fr_dt, 112) as procedure_date,
+	to_char(a.recu_fr_dt, 112) as procedure_date,
 	45756900 as procedure_type_concept_id,
 	NULL as modifier_concept_id,
-	convert(float, a.dd_mqty_freq) * convert(float, a.dd_exec_freq) * convert(float, a.mdcn_exec_freq) as quantity,
+	to_float(a.dd_mqty_freq) * to_float(a.dd_exec_freq) * to_float(a.mdcn_exec_freq) as quantity,
 	NULL as provider_id,
 	a.key_seq as visit_occurrence_id,
 	a.div_cd as procedure_source_value,
