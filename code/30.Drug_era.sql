@@ -14,14 +14,13 @@ cohort_cdm : DB for NHIS-NSC in CDM format
 ***************************************/ 
   CREATE TABLE cohort_cdm.DRUG_ERA (
      drug_era_id					INTEGER	 identity(1,1)    NOT NULL , 
-     person_id							INTEGER     NOT NULL ,
+     person_id						INTEGER     NOT NULL ,
      drug_concept_id				INTEGER   NOT NULL ,
      drug_era_start_date			DATE      NOT NULL ,
      drug_era_end_date				DATE 	  NOT NULL ,
      drug_exposure_count			INTEGER			NULL, 
 	 gap_days						INTEGER			NULL
 );
-
 
 /**************************************
  2. 1단계: 필요 데이터 조회
@@ -34,7 +33,8 @@ SELECT
 	, c.concept_id AS ingredient_concept_id
 	, d.drug_exposure_start_date AS drug_exposure_start_date
 	, d.days_supply AS days_supply
-	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
+	, COALESCE(d.drug_exposure_end_date, last_day(d.days_supply, d.drug_exposure_start_date), last_day(1, drug_exposure_start_date)) AS drug_exposure_end_date
+    --, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date 원본코드
 into cteDrugPreTarget FROM drug_exposure d
 JOIN concept_ancestor ca 
 ON ca.descendant_concept_id = d.drug_concept_id
@@ -60,7 +60,9 @@ into cteDrugTarget1 FROM  cteDrugPreTarget;
 SELECT
 	person_id
 	, ingredient_concept_id
-	, dateadd(day, -30, event_date) AS end_date -- unpad the end date
+	, last_day(event_date, 'yyyymmdd') AS end_date -- unpad the end date
+    
+    --, dateadd(day, -30, event_date) AS end_date
 into cteEndDates1 FROM
 (
 	SELECT
@@ -86,7 +88,8 @@ into cteEndDates1 FROM
 		SELECT
 			person_id
 			, ingredient_concept_id
-			, dateadd(day,30,drug_exposure_end_date)
+			, last_day(drug_exposure_end_date, 'yyyymmdd')
+            --, , dateadd(day,30,drug_exposure_end_date) 구분코드
 			, 1 AS event_type
 			, NULL
 		FROM cteDrugTarget1
