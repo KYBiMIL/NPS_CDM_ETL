@@ -36,7 +36,10 @@ SELECT
 	, d.effective_drug_dose AS dose_value
 	, d.drug_exposure_start_date
 	, d.days_supply AS days_supply
-	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
+	, COALESCE(d.drug_exposure_end_date, last_day(d.days_supply, d.drug_exposure_start_date), last_day(drug_exposure_start_date,'yyyymmdd')) AS drug_exposure_end_date
+    
+    --, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date 원본코드
+    
 INTO cteDrugTarget 
 FROM drug_exposure d
 	 JOIN concept_ancestor ca ON ca.descendant_concept_id = d.drug_concept_id
@@ -51,7 +54,9 @@ SELECT
 	, ingredient_concept_id
 	, unit_concept_id
 	, dose_value
-	, DATEADD( DAY, -30, event_date) AS end_date
+	, last_day(event_date, 'yyyymmdd') AS end_date
+    
+    --, DATEADD( DAY, -30, event_date) AS end_date 원본코드
 INTO cteEndDates FROM
 (
 	SELECT
@@ -81,7 +86,8 @@ INTO cteEndDates FROM
 			, ingredient_concept_id
 			, unit_concept_id
 			, dose_value
-			, DATEADD(DAY, 30, drug_exposure_end_date) AS drug_exposure_end_date
+			, last_day(drug_exposure_end_date,'yyyymmdd') AS drug_exposure_end_date
+            -- DATEADD(DAY, 30, drug_exposure_end_date) AS drug_exposure_end_date 원본코드
 			, 1 AS event_type
 			, NULL
 		FROM cteDrugTarget
