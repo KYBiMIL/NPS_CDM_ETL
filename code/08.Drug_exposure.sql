@@ -148,7 +148,7 @@ on A.div_cd=b.source_code
  2. 테이블 생성
 ***************************************/  
 CREATE TABLE cohort_cdm.DRUG_EXPOSURE ( 
-     drug_exposure_id				BIGINT	 	NOT NULL , 
+     drug_exposure_id				NUMBER	 	    NOT NULL , 
      person_id						INTEGER			NOT NULL , 
      drug_concept_id				INTEGER			NULL , 
      drug_exposure_start_date		DATE			NOT NULL , 
@@ -164,14 +164,44 @@ CREATE TABLE cohort_cdm.DRUG_EXPOSURE (
 	 dose_unit_concept_id			INTEGER			NULL ,
 	 lot_number						VARCHAR(50)		NULL ,
      provider_id					INTEGER			NULL , 
-     visit_occurrence_id			BIGINT			NULL , 
+     visit_occurrence_id			NUMBER			NULL , 
      drug_source_value				VARCHAR(50)		NULL ,
 	 drug_source_concept_id			INTEGER			NULL ,
 	 route_source_value				VARCHAR(50)		NULL ,
 	 dose_unit_source_value			VARCHAR(50)		NULL
     );
 
+create global temporary table cohort_cdm.DRUG_EXPOSURE
+(
+drug_exposure_id				    NUMBER	 	    NOT NULL , 
+     person_id						INTEGER			NOT NULL , 
+     drug_concept_id				INTEGER			NULL , 
+     drug_exposure_start_date		DATE			NOT NULL , 
+     drug_exposure_end_date			DATE			NULL , 
+     drug_type_concept_id			INTEGER			NOT NULL , 
+     stop_reason					VARCHAR(20)		NULL , 
+     refills						INTEGER			NULL , 
+     quantity						FLOAT			NULL , 
+     days_supply					INTEGER			NULL , 
+     sig							VARCHAR(200)	NULL , 
+	 route_concept_id				INTEGER			NULL ,
+	 effective_drug_dose			FLOAT			NULL ,
+	 dose_unit_concept_id			INTEGER			NULL ,
+	 lot_number						VARCHAR(50)		NULL ,
+     provider_id					INTEGER			NULL , 
+     visit_occurrence_id			NUMBER			NULL , 
+     drug_source_value				VARCHAR(50)		NULL ,
+	 drug_source_concept_id			INTEGER			NULL ,
+	 route_source_value				VARCHAR(50)		NULL ,
+	 dose_unit_source_value			VARCHAR(50)		NULL
+)
+on commit preserve rows;
 
+--drop table cohort_cdm.DRUG_EXPOSURE;
+
+select clause_cd, item_cd, count(clause_cd)
+from cohort_cdm.NHID_30T
+group by clause_cd, item_cd
 	
 /**************************************
  3. 30T를 이용하여 데이터 입력
@@ -182,16 +212,16 @@ drug_type_concept_id, stop_reason, refills, quantity, days_supply,
 sig, route_concept_id, effective_drug_dose, dose_unit_concept_id, lot_number,
 provider_id, visit_occurrence_id, drug_source_value, drug_source_concept_id, route_source_value, 
 dose_unit_source_value)
-SELECT convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as drug_exposure_id,
+SELECT to_number( to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as drug_exposure_id,
 	a.person_id as person_id,
 	b.concept_id as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
-	--DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_mqty_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (수정: 2017.02.17 by 이성원)
-	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	to_date(a.recu_fr_dt, 112) as drug_exposure_start_date,
+	last_day(to_float( a.mdcn_exec_freq,'yyyymmdd'), to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date,
+    --DATEADD(day, to_float( a.mdcn_exec_freq)-1, to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date, 원본코드
 	38000180 as drug_type_concept_id,
 	NULL as stop_reason,
 	NULL as refills,
-	convert(float, a.dd_mqty_exec_freq) * convert(float, a.mdcn_exec_freq) * convert(float, a.dd_mqty_freq) as quantity,
+	to_float(a.dd_mqty_exec_freq) * to_float(a.mdcn_exec_freq) * to_float(a.dd_mqty_freq) as quantity,
 	a.mdcn_exec_freq as days_supply,
 	a.clause_cd as sig,
 	CASE 
@@ -209,7 +239,7 @@ SELECT convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_num
 	a.key_seq as visit_occurrence_id,
 	a.div_cd as drug_source_value,
 	null as drug_source_concept_id,
-	a.clause_cd + '/' + a.item_cd as route_source_value,
+	a.clause_cd || '/' || a.item_cd as route_source_value,
 	NULL as dose_unit_source_value
 FROM 
 	(SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
@@ -236,16 +266,16 @@ drug_type_concept_id, stop_reason, refills, quantity, days_supply,
 sig, route_concept_id, effective_drug_dose, dose_unit_concept_id, lot_number,
 provider_id, visit_occurrence_id, drug_source_value, drug_source_concept_id, route_source_value, 
 dose_unit_source_value)
-SELECT convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as drug_exposure_id,
+SELECT to_number(to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as drug_exposure_id,
 	a.person_id as person_id,
 	b.concept_id as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
-	-- DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (수정: 2017.02.17 by 이성원)
-	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	to_date(a.recu_fr_dt, 112) as drug_exposure_start_date,
+    last_day(to_float(a.mdcn_exec_freq,'yyyymmdd'), to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date,
+     --DATEADD(day, to_float(a.mdcn_exec_freq)-1, to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date, 원본코드
 	38000177 as drug_type_concept_id,
 	NULL as stop_reason,
 	NULL as refills,
-	convert(float, a.dd_mqty_freq) * convert(float, a.dd_exec_freq) * convert(float, a.mdcn_exec_freq) as quantity,
+	to_float(a.dd_mqty_freq) * to_float(a.dd_exec_freq) * to_float(a.mdcn_exec_freq) as quantity,
 	a.mdcn_exec_freq as days_supply,
 	null as sig,
 	null as route_concept_id,
