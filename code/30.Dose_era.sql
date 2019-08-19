@@ -95,7 +95,6 @@ INTO cteEndDates FROM
 ) e
 WHERE (2 * e.start_ordinal) - e.overall_ord = 0;
 
-
 --------------------------------------------#cteDoseEraEnds
 SELECT
 	dt.person_id
