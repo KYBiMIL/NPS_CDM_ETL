@@ -1,236 +1,454 @@
 /**************************************
  --encoding : UTF-8
- --Author: 유승찬
- --Date: 2017.09.26
+ --Author: 조재형
+ --Date: 2017.03.15
  
- cohort_cdm : DB containing NHIS National Sample cohort DB
- NHID_JK: JK table in NHIS NSC
- NHID_20T: 20 table in NHIS NSC
- NHID_30T: 30 table in NHIS NSC
- NHID_40T: 40 table in NHIS NSC
- NHID_60T: 60 table in NHIS NSC
- NHID_GJ: GJ table in NHIS NSC
- --Description: MEASUREMENT 테이블 생성				
- --생성 Table: MEASUREMENT
+cohort_cdm : DB containing NHIS National Sample cohort DB
+cohort_cdm : DB for NHIS-NSC in CDM format
+NHID_JK: JK table in NHIS NSC
+NHID_20T: 20 table in NHIS NSC
+NHID_30T: 30 table in NHIS NSC
+NHID_40T: 40 table in NHIS NSC
+NHID_60T: 60 table in NHIS NSC
+NHID_GJ: GJ table in NHIS NSC
+NHID_GJ_vertical : GJ table from NHIS NSC, which was vertically transformatted
+CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
+DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
+DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+ 
+ --Description: OBSERVATION 테이블 생성
+ --Generating Table: OBSERVATION
 ***************************************/
 
 /**************************************
- 0. 테이블 생성  (33440451)
+ 1. 테이블 생성 
 ***************************************/ 
+--drop table @ResultDatabaseSchema.OBSERVATION
+--drop table #observation_mapping
+--drop table #observation_mapping09
 
-IF OBJECT_ID('cohort_cdm.MEASUREMENT', 'U') IS NULL
-CREATE TABLE cohort_cdm.MEASUREMENT
+--IF OBJECT_ID(@ResultDatabaseSchema.OBSERVATION', 'U') IS NULL
+CREATE TABLE cohort_cdm.OBSERVATION
     (
-     measurement_id						NUMBER						NOT NULL , 
+     observation_id						NUMBER						NOT NULL , 
      person_id							INTEGER						NOT NULL ,
-     measurement_concept_id				INTEGER						NOT NULL ,
-     measurement_date					DATE						NOT NULL ,
-     measurement_time					TIME						NULL,  
-     measurement_type_concept_id		integer		 				NULL,  
-	 operator_concept_id				integer		 				NULL,  
+     observation_concept_id				INTEGER						NOT NULL ,
+     observation_date					DATE						NOT NULL ,
+     observation_time					DATE						NULL,  
+     observation_type_concept_id		integer		 				NULL,  
 	 value_as_number					float		 				NULL,
+	 value_as_string					VARCHAR(50) 				NULL,
 	 value_as_concept_id				integer		 				NULL,
+	 qualifier_concept_id				integer		 				NULL,
 	 unit_concept_id					integer						NULL,
-	 range_low							float						NULL,
-	 range_high							float						NULL,
 	 provider_id						integer						NULL,
 	 visit_occurrence_id				NUMBER						NULL,
-	 measurement_source_value			VARCHAR(50) 				NULL,
-	 measurement_source_concept_id		integer						NULL,
+	 observation_source_value			VARCHAR(50) 				NULL,
+	 observation_source_concept_id		integer						NULL,
 	 unit_source_value					VARCHAR(50) 				NULL,
-	 value_source_value					VARCHAR(50)					NULL
+	 qualifier_source_value				VARCHAR(50) 				NULL
 	);
-
-
--- measurement mapping table(temp)
-
-CREATE TABLE measurement_mapping
+    
+     
+	
+	
+-- observation mapping table(temp)
+CREATE TABLE observation_mapping
     (
      meas_type						varchar(50)					NULL , 
      id_value						varchar(50)					NULL ,
      answer							NUMBER						NULL ,
-     measurement_concept_id			NUMBER						NULL ,
-	 measurement_type_concept_id	NUMBER						NULL ,
-	 measurement_unit_concept_id	NUMBER						NULL ,
+     observation_concept_id			NUMBER						NULL ,
+	 observation_type_concept_id	NUMBER						NULL ,
+	 observation_unit_concept_id	NUMBER						NULL ,
 	 value_as_concept_id			NUMBER						NULL ,
 	 value_as_number				float						NULL 
-	);
-
-create global temporary table measurement_mapping
-(
- meas_type						    varchar(50)					NULL , 
-     id_value						varchar(50)					NULL ,
-     answer							NUMBER						NULL ,
-     measurement_concept_id			NUMBER						NULL ,
-	 measurement_type_concept_id	NUMBER						NULL ,
-	 measurement_unit_concept_id	NUMBER						NULL ,
-	 value_as_concept_id			NUMBER						NULL ,
-	 value_as_number				float						NULL 
-)
-on commit preserve rows;
+	)
+;
 	
+-- insert mapping data
 INSERT ALL
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('HEIGHT',			'01',	0,	3036277,	44818701,	4122378,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('WEIGHT',			'02',	0,	3025315,	44818701,	4122383,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('WAIST',				'03',	0,	3016258,	44818701,	4122378,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('BP_HIGH',			'04',	0,	3028737,	44818701,	4118323,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('BP_LWST',			'05',	0,	3012888,	44818701,	4118323,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('BLDS',				'06',	0,	46235168,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('TOT_CHOLE',			'07',	0,	3027114,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('TRIGLYCERIDE',		'08',	0,	3022038,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('HDL_CHOLE',			'09',	0,	3023752,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('LDL_CHOLE',			'10',	0,	3028437,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('HMG',				'11',	0,	3000963,	44818702,	4121395,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	1,	3009261,	44818702,	NULL,		9189,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	2,	3009261,	44818702,	NULL,		4127785,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	3,	3009261,	44818702,	NULL,		4123508,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	4,	3009261,	44818702,	NULL,		4126673,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	5,	3009261,	44818702,	NULL,		4125547,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GLY_CD',			'12',	6,	3009261,	44818702,	NULL,		4126674,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	1,	437038,		44818702,	NULL,		9189,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	2,	437038,		44818702,	NULL,		4127785,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	3,	437038,		44818702,	NULL,		4123508,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	4,	437038,		44818702,	NULL,		4126673,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	5,	437038,		44818702,	NULL,		4125547,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_OCCU_CD',		'13',	6,	437038,		44818702,	NULL,		4126674,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PH',			'14',	0,	3015736,	44818702,	8482,		NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	1,	3014051,	44818702,	NULL,		9189,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	2,	3014051,	44818702,	NULL,		4127785,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	3,	3014051,	44818702,	NULL,		4123508,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	4,	3014051,	44818702,	NULL,		4126673,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	5,	3014051,	44818702,	NULL,		4125547,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('OLIG_PROTE_CD',		'15',	6,	3014051,	44818702,	NULL,		4126674,	NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('CREATININE',		'16',	0,	2212294,	44818702,	4121396,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('SGOT_AST',			'17',	0,	2212597,	44818702,	4118000,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('SGPT_ALT',			'18',	0,	2212598,	44818702,	4118000,	NULL,		NULL)
-INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concept_id, measurement_type_concept_id, measurement_unit_concept_id, value_as_concept_id, value_as_number) values ('GAMMA_GTP',			'19',	0,	4289475,	44818702,	4118000,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 1, 4058267, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 2, 43021368, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 3, 4058725, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 4, 4058286, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 5, 4077352, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 6, 4077982, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 7, 4058709, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 8, 4144289, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 9, 4195979, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 1, 4058267, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 2, 43021368, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 3, 4058725, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 4, 4058286, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 5, 4077352, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 6, 4077982, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 7, 4058709, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 8, 4144289, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD2', '21', 9, 4195979, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 1, 4058267, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 2, 43021368, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 3, 4058725, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 4, 4058286, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 5, 4077352, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 6, 4077982, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 7, 4058709, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 8, 4144289, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD3', '22', 9, 4195979, 44814721, null, null, null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_APOP_PMH_YN',		'23',	1,		4077982,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_HDISE_PMH_YN',		'24',	1,		4077352,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_HPRTS_PMH_YN',		'25',	1,		4058286,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_DIABML_PMH_YN',	'26',	1,		4058709,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_HPLPDM_PMH_YN',	'27',	1,		4058275,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_ETCDSE_PMH_YN',	'28',	1,		44834226,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PHSS_PMH_YN',		'29',	1,		4058267,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_LIVER_DISE_PATIEN_YN', '30', 1,	4144266,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_HPRTS_PATIEN_YN',	'31',	0,		4053372,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_HPRTS_PATIEN_YN',	'31',	1,		4050816,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_APOP_PATIEN_YN',	'32',	0,		4175587,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_APOP_PATIEN_YN',	'32',	1,		4169009,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_HDISE_PATIEN_YN',	'33',	0,		4050792,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_HDISE_PATIEN_YN',	'33',	1,		4173498,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_DIABML_PATIEN_YN',	'34',	0,		4051106,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_DIABML_PATIEN_YN',	'34',	1,		4051114,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_CANCER_PATIEN_YN',	'35',	0,		4051100,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('FMLY_CANCER_PATIEN_YN',	'35',	1,		4171594,		44814721,	null,		null,		null)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_STAT_TYPE_RSPS_CD',	'36',	1,		4222303,		44814721,	NULL,		NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_STAT_TYPE_RSPS_CD',	'36',	2,		4310250,		44814721,	NULL,		NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_STAT_TYPE_RSPS_CD',	'36',	3,		4276526,		44814721,	NULL,		NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_TERM_RSPS_CD',		'37',	1,		40766364,		44818704,	NULL,		NULL,		2.5) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_TERM_RSPS_CD',		'37',	2,		40766364,		44818704,	NULL,		NULL,		7.5) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_TERM_RSPS_CD',		'37',	3,		40766364,		44818704,	NULL,		NULL,		15) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_TERM_RSPS_CD',		'37',	4,		40766364,		44818704,	NULL,		NULL,		25) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('SMK_TERM_RSPS_CD',		'37',	5,		40766364,		44818704,	NULL,		NULL,		30) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CUR_SMK_TERM_RSPS_CD',	'38',	0,		40766364,		44818704,	9448,		NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CUR_DSQTY_RSPS_CD',		'39',	0,		40766929,		44818704,	45756923,	NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('PAST_SMK_TERM_RSPS_CD',	'40',	0,		40766364,		44818704,	9448,		NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('PAST_DSQTY_RSPS_CD',	'41',	0,		40766930,		44818704,	45756923,	NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DSQTY_RSPS_CD',			'42',	1,		40766929,		44818704,	45756954,	NULL,		0.25) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DSQTY_RSPS_CD',			'42',	2,		40766929,		44818704,	45756954,	NULL,		0.75) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DSQTY_RSPS_CD',			'42',	3,		40766929,		44818704,	45756954,	NULL,		1.5) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DSQTY_RSPS_CD',			'42',	4,		40766929,		44818704,	45756954,	NULL,		2) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	1,		40771103,		44818704,	NULL,		45882527,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	2,		40771103,		44818704,	NULL,		45885249,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	3,		40771103,		44818704,	NULL,		45881653,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	4,		40771103,		44818704,	NULL,		45885248,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	5,		40771103,		44818704,	NULL,		45879676,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	1,		3037705,		44818704,	4045131,	NULL,		3.5) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	2,		3037705,		44818704,	4045131,	NULL,		7)		
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	3,		3037705,		44818704,	4045131,	NULL,		10.5)	
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	4,		3037705,		44818704,	4045131,	NULL,		14)	
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('EXERCI_FREQ_RSPS_CD',	'45',	1,		4036426,		44818704,	NULL,		45882527,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('EXERCI_FREQ_RSPS_CD',	'45',	2,		4036426,		44818704,	NULL,		45881653,	NULL)																						   
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('EXERCI_FREQ_RSPS_CD',	'45',	3,		4036426,		44818704,	NULL,		45885248,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('EXERCI_FREQ_RSPS_CD',	'45',	4,		4036426,		44818704,	NULL,		45883166,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('EXERCI_FREQ_RSPS_CD',	'45',	5,		4036426,		44818704,	NULL,		45879676,	NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('MOV20_WEK_FREQ_ID',		'46',	0,		82020119,		44818704,	NULL,		NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('MOV30_WEK_FREQ_ID',		'47',	0,		82020120,		44818704,	NULL,		NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('WLK30_WEK_FREQ_ID',		'48',	0,		82020121,		44818704,	NULL,		NULL,		NULL) 
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	0,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	1,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	2,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	3,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	4,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	5,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	6,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	7,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	8,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	9,		3004572,		44814721,	4155146,	NULL,		NULL)
+INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('CTRB_PT_TYPE_CD',		'49',	10,		3004572,		44814721,	4155146,	NULL,		NULL)
+;
 select 1 from dual;
 
-select * from measurement_mapping;
-																																																																					
-
-/**************************************																																							   
- 1. 행을 열로 전환
-***************************************/ 
-select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value into cohort_cdm.GJ_VERTICAL
-from cohort_cdm.NHID_GJ
-unpivot (meas_value for meas_type in ( -- 47 검진 항목
-	height, weight, waist, bp_high, bp_lwst,
-	blds, tot_chole, triglyceride, hdl_chole, ldl_chole,
-	hmg, gly_cd, olig_occu_cd, olig_ph, olig_prote_cd,
-	creatinine, sgot_ast, sgpt_alt, gamma_gtp, hchk_pmh_cd1,
-	hchk_pmh_cd2, hchk_pmh_cd3, hchk_apop_pmh_yn, hchk_hdise_pmh_yn, hchk_hprts_pmh_yn,
-	hchk_diabml_pmh_yn, hchk_hplpdm_pmh_yn, hchk_etcdse_pmh_yn, hchk_phss_pmh_yn, fmly_liver_dise_patien_yn, 
-	fmly_hprts_patien_yn, fmly_apop_patien_yn, fmly_hdise_patien_yn, fmly_diabml_patien_yn, fmly_cancer_patien_yn, 
-	smk_stat_type_rsps_cd, smk_term_rsps_cd, cur_smk_term_rsps_cd, cur_dsqty_rsps_cd, past_smk_term_rsps_cd, 
-	past_dsqty_rsps_cd, dsqty_rsps_cd, drnk_habit_rsps_Cd, tm1_drkqty_rsps_cd, exerci_freq_rsps_cd, 
-	mov20_wek_freq_id, mov30_wek_freq_id, wlk30_wek_freq_id
-)) as unpivortn
-
-
-
+select * from observation_mapping;																																	 
 
 
 /**************************************
- 2. 수치형 데이터 입력  
+ 2. 코드형 데이터 입력 (14768634개 행이 영향을 받음)
 ***************************************/ 
-INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
-											unit_concept_id, range_low, range_high, provider_id, visit_occurrence_id, measurement_source_value, measurement_source_concept_id, unit_source_value, value_source_value)
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-
-	select	case	when a.meas_type = 'HEIGHT' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'WEIGHT' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'WAIST' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'BP_HIGH' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'BP_LWST' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'BLDS' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'TOT_CHOLE' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'TRIGLYCERIDE' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HDL_CHOLE' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'LDL_CHOLE' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HMG' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'OLIG_PH' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'CREATININE' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'SGOT_AST' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'SGPT_ALT' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'GAMMA_GTP' then cast(concat(c.master_seq, b.id_value) as bigint)
-					end as measurement_id,
+	select	case	when a.meas_type = 'HCHK_PMH_CD1' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_PMH_CD2' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_PMH_CD3' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_APOP_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_HDISE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_HPRTS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_DIABML_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_HPLPDM_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_ETCDSE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'HCHK_PHSS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_LIVER_DISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_HPRTS_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_APOP_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_HDISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_DIABML_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'FMLY_CANCER_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'SMK_STAT_TYPE_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'EXERCI_FREQ_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					end as observation_id,
 			a.person_id as person_id,
-			b.measurement_concept_id as measurement_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as measurement_date,
-			measurement_time = null,
-			b.measurement_type_concept_id as measurement_type_concept_id,
-			operator_concept_id = null,
-			b.value_as_number as value_as_number,
+			b.observation_concept_id as observation_concept_id,
+			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			oservation_time = null,
+			b.observation_type_concept_id as observation_type_concept_id,
+				CASE WHEN b.answer is not null
+				then b.value_as_number
+				else a.meas_value
+				END as value_as_number,
+			value_as_string = null,
 			b.value_as_concept_id as value_as_concept_id,
-			b.measurement_unit_concept_id as unit_concept_id ,
-			range_low = null,
-			range_high = null,
+			qualifier_source_value = null,
+			unit_concept_id = null,
 			provider_id = null,
-			c.master_seq as visit_occurrence_id,
-			a.meas_value as measurement_source_value,
-			measurement_source_concept_id =null,
+			visit_occurrence_id = c.master_seq,
+			a.meas_value as observation_source_value,
+			observation_source_concept_id = null,
 			unit_source_value = null,
-			a.meas_value as value_source_value
+			qualifier_source_Value = null
 
-	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 			
-			from cohort_cdm.GJ_VERTICAL) a
-		JOIN measurement_mapping b 
-		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
-			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN cohort_cdm.SEQ_MASTER c
-		on a.person_id = cast(c.person_id as char)
-			and a.hchk_year = c.hchk_year
-	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('HEIGHT', 'WEIGHT',	'WAIST', 'BP_HIGH', 'BP_LWST', 'BLDS', 'TOT_CHOLE', 'TRIGLYCERIDE',	'HDL_CHOLE',		
-																	'LDL_CHOLE', 'HMG', 'OLIG_PH', 'CREATININE', 'SGOT_AST', 'SGPT_ALT', 'GAMMA_GTP')
-			and c.source_table like 'GJT')
-;
-
-	
-
-/**************************************
- 2. 코드형 데이터 입력  
-***************************************/ 
-INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_concept_id, measurement_date, measurement_time, measurement_type_concept_id, operator_concept_id, value_as_number, value_as_concept_id,			
-											unit_concept_id, range_low, range_high, provider_id, visit_occurrence_id, measurement_source_value, measurement_source_concept_id, unit_source_value, value_source_value)
-
-
-	select	case	when a.meas_type = 'GLY_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'OLIG_OCCU_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'OLIG_PROTE_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					end as measurement_id,
-			a.person_id as person_id,
-			b.measurement_concept_id as measurement_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as measurement_date,
-			measurement_time = null,
-			b.measurement_type_concept_id as measurement_type_concept_id,
-			operator_concept_id = null,
-			b.value_as_number as value_as_number,
-			b.value_as_concept_id as value_as_concept_id,
-			b.measurement_unit_concept_id as unit_concept_id ,
-			range_low = null,
-			range_high = null,
-			provider_id = null,
-			c.master_seq as visit_occurrence_id,
-			a.meas_value as measurement_source_value,
-			measurement_source_concept_id =null,
-			unit_source_value = null,
-			a.meas_value as value_source_value
-
-	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 			
-			from cohort_cdm.GJ_VERTICAL) a
-		JOIN measurement_mapping b 
+	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, 
+				--가족력(FMLY_로 시작하는 변수)  유무 변수 08년까진 1, 2로 기록, 09년부터는 0, 1로 기록 고려
+				case	when substring(meas_type, 1, 30) in('FMLY_LIVER_DISE_PATIEN_YN', 'FMLY_HPRTS_PATIEN_YN', 'FMLY_APOP_PATIEN_YN', 'FMLY_HDISE_PATIEN_YN', 'FMLY_DIABML_PATIEN_YN', 'FMLY_CANCER_PATIEN_YN') 
+							and substring(hchk_year, 1, 4) in ('2002', '2003', '2004', '2005', '2006', '2007', '2008') then cast(cast(meas_value as int)-1 as varchar(50))
+				else meas_value
+				end as meas_value 			
+			from cohort_cdm.NHID_GJ_vertical) a
+		JOIN observation_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
 		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
-	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('GLY_CD', 'OLIG_OCCU_CD', 'OLIG_PROTE_CD')
-			and c.source_table like 'GJT');
+	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('HCHK_PMH_CD1', 'HCHK_PMH_CD2', 'HCHK_PMH_CD3','HCHK_APOP_PMH_YN', 'HCHK_HDISE_PMH_YN', 'HCHK_HPRTS_PMH_YN', 
+																	'HCHK_DIABML_PMH_YN', 'HCHK_HPLPDM_PMH_YN', 'HCHK_ETCDSE_PMH_YN', 'HCHK_PHSS_PMH_YN', 'FMLY_LIVER_DISE_PATIEN_YN', 'FMLY_HPRTS_PATIEN_YN', 
+																	'FMLY_APOP_PATIEN_YN', 'FMLY_HDISE_PATIEN_YN', 'FMLY_DIABML_PATIEN_YN', 'FMLY_CANCER_PATIEN_YN', 'SMK_STAT_TYPE_RSPS_CD', 'SMK_TERM_RSPS_CD',
+																	 'DSQTY_RSPS_CD', 'EXERCI_FREQ_RSPS_CD')
+		or(a.meas_value != '' and substring(a.meas_type, 1, 30) in ('DRNK_HABIT_RSPS_CD', 'TM1_DRKQTY_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2002', '2003', '2004', '2005', '2006', '2007', '2008')))
+			and c.source_table like 'GJT'
+;
+
+
 
 /**************************************
- 3.source_value의 값을 value_as_number에도 입력
+ 2. 수치형 데이터 입력 (4468917개 행이 영향을 받음)
 ***************************************/ 
-UPDATE cohort_cdm.MEASUREMENT
-SET value_as_number = measurement_source_value
-where measurement_source_value is not null
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
+
+	select	case	when a.meas_type = 'CUR_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'CUR_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'PAST_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'PAST_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'MOV20_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'MOV30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
+					when a.meas_type = 'WLK30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
+					end as observation_id,
+			a.person_id as person_id,
+			b.observation_concept_id as observation_concept_id,
+			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			oservation_time = null,
+			b.observation_type_concept_id as observation_type_concept_id,
+				CASE WHEN b.answer is not null
+				then b.value_as_number
+				else a.meas_value
+				END as value_as_number,
+			value_as_string = null,
+			b.value_as_concept_id as value_as_concept_id,
+			qualifier_source_value = null,
+			b.observation_unit_concept_id as unit_concept_id ,
+			provider_id = null,
+			visit_occurrence_id = c.master_seq,
+			a.meas_value as observation_source_value,
+			observation_source_concept_id = null,
+			unit_source_value = null,
+			qualifier_source_Value = null
+
+	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
+			from cohort_cdm.NHID_GJ_vertical) a
+		JOIN observation_mapping b 
+		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
+			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
+		JOIN cohort_cdm.SEQ_MASTER c
+		on a.person_id = cast(c.person_id as char)
+			and a.hchk_year = c.hchk_year
+	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('CUR_SMK_TERM_RSPS_CD', 'CUR_DSQTY_RSPS_CD', 'PAST_SMK_TERM_RSPS_CD', 'PAST_DSQTY_RSPS_CD', 
+																	'MOV20_WEK_FREQ_ID', 'MOV30_WEK_FREQ_ID', 'WLK30_WEK_FREQ_ID'))
+			and c.source_table like 'GJT'
+;
+
+
+/**************************************
+ 2. 09년부터 응답이 바뀌는 음주 수치 입력 (693930개 행이 영향을 받음)
+***************************************/ 
+--temp mapping table
+
+
+
+CREATE TABLE observation_mapping09
+    (
+     meas_type						varchar(50)					NULL , 
+     id_value						varchar(50)					NULL ,
+     answer							NUMBER						NULL ,
+     observation_concept_id			NUMBER						NULL ,
+	 observation_type_concept_id	NUMBER						NULL ,
+	 observation_unit_concept_id	NUMBER						NULL ,
+	 value_as_concept_id			NUMBER						NULL ,
+	 value_as_number				float						NULL 
+	)
+;
+
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	1,		40771103,		44818704,	45881908,		NULL,		0)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	2,		40771103,		44818704,	45881908,		NULL,		1)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	3,		40771103,		44818704,	45881908,		NULL,		2)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	4,		40771103,		44818704,	45881908,		NULL,		3)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	5,		40771103,		44818704,	45881908,		NULL,		4)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	6,		40771103,		44818704,	45881908,		NULL,		5)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	7,		40771103,		44818704,	45881908,		NULL,		6)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	8,		40771103,		44818704,	45881908,		NULL,		7)
+INTO observation_mapping09 VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	0,		3037705,		44818704,	4045131,		NULL,		NULL) 
+
+
+
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
+
+select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+				end as observation_id,
+			a.person_id as person_id,
+			b.observation_concept_id as observation_concept_id,
+			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			oservation_time = null,
+			b.observation_type_concept_id as observation_type_concept_id,
+				CASE WHEN b.answer is not null
+				then b.value_as_number
+				else a.meas_value
+				END as value_as_number,
+			value_as_string = null,
+			b.value_as_concept_id as value_as_concept_id,
+			qualifier_source_value = null,
+			b.observation_unit_concept_id as unit_concept_id ,
+			provider_id = null,
+			visit_occurrence_id = c.master_seq,
+			a.meas_value as observation_source_value,
+			observation_source_concept_id = null,
+			unit_source_value = null,
+			qualifier_source_Value = null
+
+	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
+			from cohort_cdm.NHID_GJ_vertical) a
+		JOIN observation_mapping09 b 
+		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
+			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
+		JOIN cohort_cdm.SEQ_MASTER c
+		on a.person_id = cast(c.person_id as char)
+			and a.hchk_year = c.hchk_year
+	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('TM1_DRKQTY_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
+			and c.source_table like 'GJT'
+;
+
+/**************************************
+ 2. 09년부터 응답이 바뀌는 음주 코드 입력 (1147565개 행이 영향을 받음)
+***************************************/ 
+--temp mapping table
+
+
+
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
+
+	select	case	when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+					end as observation_id,
+			a.person_id as person_id,
+			b.observation_concept_id as observation_concept_id,
+			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			oservation_time = null,
+			b.observation_type_concept_id as observation_type_concept_id,
+				CASE WHEN b.answer is not null
+				then b.value_as_number
+				else a.meas_value
+				END as value_as_number,
+			value_as_string = null,
+			b.value_as_concept_id as value_as_concept_id,
+			qualifier_source_value = null,
+			b.observation_unit_concept_id as unit_concept_id ,
+			provider_id = null,
+			visit_occurrence_id = c.master_seq,
+			a.meas_value as observation_source_value,
+			observation_source_concept_id = null,
+			unit_source_value = null,
+			qualifier_source_Value = null
+
+	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
+			from cohort_cdm.NHID_GJ_vertical) a
+		JOIN observation_mapping09 b 
+		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
+			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
+		JOIN cohort_cdm.SEQ_MASTER c
+		on a.person_id = cast(c.person_id as char)
+			and a.hchk_year = c.hchk_year
+	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('DRNK_HABIT_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
+			and c.source_table like 'GJT'
+;
+
+
+
+/**************************************
+ 2. 소득분위 데이터 입력 (11716257개 행이 영향을 받음)
+***************************************/ 
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
+
+	
+
+
+	select	row_number() OVER(order by a.person_id asc) as observation_id,
+			a.person_id as person_id,
+			b.observation_concept_id as observation_concept_id,
+			cast(to_char(a.STND_Y || '0101', 23)as date) as observation_date,
+			oservation_time = null,
+			b.observation_type_concept_id as observation_type_concept_id,
+				CASE WHEN b.answer is not null
+				then b.value_as_number
+				else a.CTRB_PT_TYPE_CD
+				END as value_as_number,
+			value_as_string = null,
+			b.value_as_concept_id as value_as_concept_id,
+			qualifier_source_value = null,
+			b.observation_unit_concept_id as unit_concept_id,
+			provider_id = null,
+			visit_occurrence_id = null ,
+			a.CTRB_PT_TYPE_CD as observation_source_value,
+			observation_source_concept_id = null,
+			unit_source_value = null,
+			qualifier_source_Value = null
+
+	from (select STND_Y, PERSON_ID, CTRB_PT_TYPE_CD from cohort_cdm.NHID_20T) a
+		JOIN observation_mapping b 
+		on isnull(a.CTRB_PT_TYPE_CD,'') = isnull(b.answer,'') 
+	where a.CTRB_PT_TYPE_CD != '' and b.meas_type = 'CTRB_PT_TYPE_CD'
+;
+
+
+
+
+/*****************************************************
+					테이블 확인
+*****************************************************/
+
+--------------변환전 건수
+select distinct meas_type, count(meas_type)
+from cohort_cdm.NHID_GJ_vertical
+where meas_value != ''  and substring(meas_type, 1, 30) in ('HCHK_PMH_CD1', 'HCHK_PMH_CD2', 'HCHK_PMH_CD3','HCHK_APOP_PMH_YN', 'HCHK_HDISE_PMH_YN', 'HCHK_HPRTS_PMH_YN', 
+																	'HCHK_DIABML_PMH_YN', 'HCHK_HPLPDM_PMH_YN', 'HCHK_ETCDSE_PMH_YN', 'HCHK_PHSS_PMH_YN', 'FMLY_LIVER_DISE_PATIEN_YN', 'FMLY_HPRTS_PATIEN_YN', 
+																	'FMLY_APOP_PATIEN_YN', 'FMLY_HDISE_PATIEN_YN', 'FMLY_DIABML_PATIEN_YN', 'FMLY_CANCER_PATIEN_YN', 'SMK_STAT_TYPE_RSPS_CD', 'SMK_TERM_RSPS_CD', 
+																	'DSQTY_RSPS_CD', 'DRNK_HABIT_RSPS_CD', 'TM1_DRKQTY_RSPS_CD', 'EXERCI_FREQ_RSPS_CD', 'CUR_SMK_TERM_RSPS_CD', 'CUR_DSQTY_RSPS_CD', 'PAST_SMK_TERM_RSPS_CD', 'PAST_DSQTY_RSPS_CD', 
+																	'MOV20_WEK_FREQ_ID', 'MOV30_WEK_FREQ_ID', 'WLK30_WEK_FREQ_ID')
+group by meas_type 
+order by meas_type
