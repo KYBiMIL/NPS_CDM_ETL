@@ -33,7 +33,7 @@ DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
 
 CREATE TABLE cohort_cdm.DEVICE_EXPOSURE ( 
-     device_exposure_id				BIGINT	 		PRIMARY KEY , 
+     device_exposure_id				NUMBER	 		PRIMARY KEY , 
      person_id						INTEGER			NOT NULL , 
      divce_concept_id				INTEGER			NOT NULL , 
      device_exposure_start_date		DATE			NOT NULL , 
@@ -42,11 +42,29 @@ CREATE TABLE cohort_cdm.DEVICE_EXPOSURE (
      unique_device_id				VARCHAR(20)		NULL , 
      quantity						float			NULL , 
      provider_id					INTEGER			NULL , 
-     visit_occurrence_id			BIGINT			NULL , 
+     visit_occurrence_id			NUMBER			NULL , 
 	 device_source_value			VARCHAR(50)		NULL ,
 	 device_source_concept_id		integer			NULL 
     );
 
+create global temporary table cohort_cdm.PROCEDURE_OCCURRENCE
+(
+    device_exposure_id				NUMBER	 		PRIMARY KEY , 
+     person_id						INTEGER			NOT NULL , 
+     divce_concept_id				INTEGER			NOT NULL , 
+     device_exposure_start_date		DATE			NOT NULL , 
+     device_exposure_end_date		DATE			NULL , 
+     device_type_concept_id			INTEGER			NOT NULL , 
+     unique_device_id				VARCHAR(20)		NULL , 
+     quantity						float			NULL , 
+     provider_id					INTEGER			NULL , 
+     visit_occurrence_id			NUMBER			NULL , 
+	 device_source_value			VARCHAR(50)		NULL ,
+	 device_source_concept_id		integer			NULL 
+)
+on commit preserve rows;
+
+--drop table cohort_cdm.PROCEDURE_OCCURRENCE;
 
 /**************************************
  2. 데이터 입력 및 확인 (30t : 8515647개 행이 영향을 받음, 03:53, 매핑이 안돼서/ 60t : 72개 행이 영향을 받음, 00:48, 매핑이 안돼서) 총 8,515,719건
@@ -57,11 +75,12 @@ insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, divce_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
-select	convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as device_exposure_id,
+select	to_number(to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as device_exposure_id,
 		a.person_id as person_id,
 		b.concept_id as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
-		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
+		to_char(a.recu_fr_dt, 23) as device_source_start_date,
+		to_char(last_day(a.mdcn_exec_freq, 'yyyymmdd' a.recu_fr_dt),23) as device_source_end_date,
+        --CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date, 원본코드
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
 case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not null and cast(a.UN_COST as float) > 0 and cast(a.AMT as float)>=cast(a.UN_COST as float) then cast(a.AMT as float)/cast(a.UN_COST as float)
@@ -93,11 +112,12 @@ insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, divce_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
-select	convert(bigint, convert(varchar, a.master_seq) + convert(varchar, row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as device_exposure_id,
+select	to_number(to_char(a.master_seq) || to_char(row_number() over (partition by a.key_seq, a.seq_no order by b.concept_id))) as device_exposure_id,
 		a.person_id as person_id,
 		b.concept_id as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
-		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
+		to_char( a.recu_fr_dt, 23) as device_source_start_date,
+		to_char(last_day(a.mdcn_exec_freq, 'yyyymmdd' a.recu_fr_dt),23) as device_source_end_date,
+        --CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date, 원본코드
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
 case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not null and cast(a.UN_COST as float) > 0 and cast(a.AMT as float)>=cast(a.UN_COST as float) then cast(a.AMT as float)/cast(a.UN_COST as float)
