@@ -3,18 +3,18 @@
  --Author: 조재형
  --Date: 2017.02.21
  
-cohort_cdm : DB containing NHIS National Sample cohort DB
-cohort_cdm : DB for NHIS-NSC in CDM format
-NHID_JK: JK table in NHIS NSC
-NHID_20T: 20 table in NHIS NSC
-NHID_30T: 30 table in NHIS NSC
-NHID_40T: 40 table in NHIS NSC
-NHID_60T: 60 table in NHIS NSC
-NHID_GJ: GJ table in NHIS NSC
-CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
-DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
-PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
-DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+@NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
+@ResultDatabaseSchema : DB for NHIS-NSC in CDM format
+@NHIS_JK: JK table in NHIS NSC
+@NHIS_20T: 20 table in NHIS NSC
+@NHIS_30T: 30 table in NHIS NSC
+@NHIS_40T: 40 table in NHIS NSC
+@NHIS_60T: 60 table in NHIS NSC
+@NHIS_GJ: GJ table in NHIS NSC
+@CONDITION_MAPPINGTABLE : mapping table between KCD and OMOP vocabulary
+@DRUG_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
+@PROCEDURE_MAPPINGTABLE : mapping table between Korean procedure and OMOP vocabulary
+@DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  
  --Description: PAYER_PLAN_PERIOD 테이블 생성
 			   1) payer_plan_period_id = person_id+연도 4자로 정의
@@ -36,8 +36,19 @@ CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
      payer_source_value					VARCHAR(50) 				NULL,  
      plan_source_value					VARCHAR(50) 				NULL,  
 	 family_source_value				VARCHAR(50) 				NULL   
-	);
- 
+	); -- DROP TABLE @ResultDatabaseSchema.PAYER_PLAN_PERIOD
+    
+create global temporary table cohort_cdm.PAYER_PLAN_PERIOD
+(
+     payer_plan_period_id				NUMBER						NOT NULL , 
+     person_id							INTEGER						NOT NULL ,
+     payer_plan_period_start_date		DATE						NOT NULL ,
+     payer_plan_period_end_date			DATE						NOT NULL ,
+     payer_source_value					VARCHAR(50) 				NULL,  
+     plan_source_value					VARCHAR(50) 				NULL,  
+	 family_source_value				VARCHAR(50) 				NULL   
+)
+on commit preserve rows;
  
  
 /**************************************
@@ -47,7 +58,7 @@ CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
 INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer_plan_period_start_date, payer_plan_period_end_date, payer_source_value, plan_source_value, family_source_value)
 	SELECT	a.person_id+STND_Y as payer_plan_period_id,
 			a.person_id as person_id,
-			cast(to_char(STND_Y || '0101' ,23) as date) as payer_plan_period_start_date,
+			cast(to_char( STND_Y || '0101' ,23) as date) as payer_plan_period_start_date,
 			case when year < death_date then a.year
 			when year > death_date then death_date
 			else a.year
@@ -57,4 +68,4 @@ INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer
 			family_source_value = null
 	FROM 
 			(select person_id, STND_Y, IPSN_TYPE_CD, cast(to_char(cast(YEAR as varchar) || '1231' ,23) as date) as year from cohort_cdm.NHID_JK ) a left join cohort_cdm.Death b
-	  		on a.person_id=b.person_id;
+	  		on a.person_id=b.person_id
