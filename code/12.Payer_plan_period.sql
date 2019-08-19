@@ -29,7 +29,7 @@ DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
 
 CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
     (
-     payer_plan_period_id				BIGINT						NOT NULL , 
+     payer_plan_period_id				NUMBER						NOT NULL , 
      person_id							INTEGER						NOT NULL ,
      payer_plan_period_start_date		DATE						NOT NULL ,
      payer_plan_period_end_date			DATE						NOT NULL ,
@@ -47,7 +47,7 @@ CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
 INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer_plan_period_start_date, payer_plan_period_end_date, payer_source_value, plan_source_value, family_source_value)
 	SELECT	a.person_id+STND_Y as payer_plan_period_id,
 			a.person_id as person_id,
-			cast(convert(VARCHAR, STND_Y + '0101' ,23) as date) as payer_plan_period_start_date,
+			cast(to_char(STND_Y || '0101' ,23) as date) as payer_plan_period_start_date,
 			case when year < death_date then a.year
 			when year > death_date then death_date
 			else a.year
@@ -56,5 +56,5 @@ INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer
 			IPSN_TYPE_CD as plan_source_value,
 			family_source_value = null
 	FROM 
-			(select person_id, STND_Y, IPSN_TYPE_CD, cast(convert(VARCHAR, cast(YEAR as varchar) + '1231' ,23) as date) as year from cohort_cdm.NHID_JK ) a left join cohort_cdm.Death b
-	  		on a.person_id=b.person_id
+			(select person_id, STND_Y, IPSN_TYPE_CD, cast(to_char(cast(YEAR as varchar) || '1231' ,23) as date) as year from cohort_cdm.NHID_JK ) a left join cohort_cdm.Death b
+	  		on a.person_id=b.person_id;
