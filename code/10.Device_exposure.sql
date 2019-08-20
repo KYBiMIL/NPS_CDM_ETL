@@ -47,7 +47,7 @@ CREATE TABLE cohort_cdm.DEVICE_EXPOSURE (
 	 device_source_concept_id		integer			NULL 
     );
 
-create global temporary table cohort_cdm.PROCEDURE_OCCURRENCE
+create global temporary table cohort_cdm.DEVICE_EXPOSURE
 (
     device_exposure_id				NUMBER	 		PRIMARY KEY , 
      person_id						INTEGER			NOT NULL , 
@@ -94,9 +94,9 @@ case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not nu
 
 FROM 
 	(SELECT x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd, 
-			case when x.mdcn_exec_freq is not null and x.mdcn_exec_freq > '0' and isnumeric(x.mdcn_exec_freq)=1 then cast(x.mdcn_exec_freq as float) else 1 end as mdcn_exec_freq,
-			case when x.dd_mqty_exec_freq is not null and x.dd_mqty_exec_freq > '0' and isnumeric(x.dd_mqty_exec_freq)=1 then cast(x.dd_mqty_exec_freq as float) else 1 end as dd_mqty_exec_freq,
-			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
+			case when x.mdcn_exec_freq is not null and x.mdcn_exec_freq > '0' and REGEXP_INSTR(x.mdcn_exec_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.mdcn_exec_freq as float) else 1 end as mdcn_exec_freq,
+			case when x.dd_mqty_exec_freq is not null and x.dd_mqty_exec_freq > '0' and REGEXP_INSTR(x.dd_mqty_exec_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.dd_mqty_exec_freq as float) else 1 end as dd_mqty_exec_freq,
+			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and REGEXP_INSTR(x.dd_mqty_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
 	FROM cohort_cdm.NHID_30T x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='130'
@@ -131,9 +131,9 @@ case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not nu
 
 FROM 
 	(SELECT x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd, 
-			case when x.mdcn_exec_freq is not null and x.mdcn_exec_freq > '0' and isnumeric(x.mdcn_exec_freq)=1 then cast(x.mdcn_exec_freq as float) else 1 end as mdcn_exec_freq,
-			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
-			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and isnumeric(x.dd_exec_freq)=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
+			case when x.mdcn_exec_freq is not null and x.mdcn_exec_freq > '0' and REGEXP_INSTR(x.mdcn_exec_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.mdcn_exec_freq as float) else 1 end as mdcn_exec_freq,
+			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and REGEXP_INSTR(x.dd_mqty_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
+			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and REGEXP_INSTR(x.dd_exec_freq,'^[+-]?\d*(\.?\d*)$')=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
 	FROM cohort_cdm.NHID_60T x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='160'
