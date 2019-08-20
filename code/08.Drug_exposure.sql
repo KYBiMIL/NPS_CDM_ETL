@@ -187,7 +187,7 @@ SELECT to_number(to_char(a.master_seq) || to_char(row_number() over (partition b
 	b.concept_id as drug_concept_id,
 	to_date(a.recu_fr_dt, 112) as drug_exposure_start_date,
 	--DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_mqty_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (수정: 2017.02.17 by 이성원)
-	DATEADD(day, to_float(a.mdcn_exec_freq) -1, to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	last_day(to_float(a.mdcn_exec_freq, 'yyyymmdd') -1, to_date(a.recu_fr_dt, 112)) as drug_exposure_end_date,
 	38000180 as drug_type_concept_id,
 	NULL as stop_reason,
 	NULL as refills,
