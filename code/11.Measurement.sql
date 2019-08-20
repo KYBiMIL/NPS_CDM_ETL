@@ -49,7 +49,28 @@ CREATE TABLE cohort_cdm.OBSERVATION
 	 unit_source_value					VARCHAR(50) 				NULL,
 	 qualifier_source_value				VARCHAR(50) 				NULL
 	);
-    
+
+create global temporary table cohort_cdm.OBSERVATION
+(
+     observation_id						NUMBER						NOT NULL , 
+     person_id							INTEGER						NOT NULL ,
+     observation_concept_id				INTEGER						NOT NULL ,
+     observation_date					DATE						NOT NULL ,
+     observation_time					DATE						NULL,  
+     observation_type_concept_id		integer		 				NULL,  
+	 value_as_number					float		 				NULL,
+	 value_as_string					VARCHAR(50) 				NULL,
+	 value_as_concept_id				integer		 				NULL,
+	 qualifier_concept_id				integer		 				NULL,
+	 unit_concept_id					integer						NULL,
+	 provider_id						integer						NULL,
+	 visit_occurrence_id				NUMBER						NULL,
+	 observation_source_value			VARCHAR(50) 				NULL,
+	 observation_source_concept_id		integer						NULL,
+	 unit_source_value					VARCHAR(50) 				NULL,
+	 qualifier_source_value				VARCHAR(50) 				NULL
+)
+on commit preserve rows;    
      
 	
 	
@@ -184,28 +205,28 @@ select * from observation_mapping;
 INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-	select	case	when a.meas_type = 'HCHK_PMH_CD1' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_PMH_CD2' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_PMH_CD3' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_APOP_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_HDISE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_HPRTS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_DIABML_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_HPLPDM_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_ETCDSE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'HCHK_PHSS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_LIVER_DISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_HPRTS_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_APOP_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_HDISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_DIABML_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'FMLY_CANCER_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'SMK_STAT_TYPE_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'EXERCI_FREQ_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+	select	case	when a.meas_type = 'HCHK_PMH_CD1' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_PMH_CD2' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_PMH_CD3' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_APOP_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_HDISE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_HPRTS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_DIABML_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_HPLPDM_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_ETCDSE_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'HCHK_PHSS_PMH_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_LIVER_DISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_HPRTS_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_APOP_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_HDISE_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_DIABML_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'FMLY_CANCER_PATIEN_YN' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'SMK_STAT_TYPE_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'EXERCI_FREQ_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
@@ -256,13 +277,13 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-	select	case	when a.meas_type = 'CUR_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'CUR_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'PAST_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'PAST_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'MOV20_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'MOV30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
-					when a.meas_type = 'WLK30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as bigint)
+	select	case	when a.meas_type = 'CUR_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'CUR_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'PAST_SMK_TERM_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'PAST_DSQTY_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'MOV20_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'MOV30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as NUMBER)
+					when a.meas_type = 'WLK30_WEK_FREQ_ID' then cast(concat(c.master_seq, b.id_value) as NUMBER)
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
@@ -392,7 +413,7 @@ select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_se
 INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_time, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-	select	case	when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as bigint)
+	select	case	when a.meas_type = 'DRNK_HABIT_RSPS_CD' then cast(concat(c.master_seq, b.id_value) as NUMBER)
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
@@ -460,8 +481,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 	from (select STND_Y, PERSON_ID, CTRB_PT_TYPE_CD from cohort_cdm.NHID_20T) a
 		JOIN observation_mapping b 
 		on isnull(a.CTRB_PT_TYPE_CD,'') = isnull(b.answer,'') 
-	where a.CTRB_PT_TYPE_CD != '' and b.meas_type = 'CTRB_PT_TYPE_CD'
-;
+	where a.CTRB_PT_TYPE_CD != '' and b.meas_type = 'CTRB_PT_TYPE_CD';
 
 
 
