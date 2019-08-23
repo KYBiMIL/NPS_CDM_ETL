@@ -49,6 +49,7 @@ AND c.concept_class_ID = 'Ingredient';
 
 
 --------------------------------------------#cteDrugTarget1
+create temp table cteDrugTarget1 as
 SELECT
 	drug_exposure_id
 	, person_id
@@ -58,16 +59,17 @@ SELECT
 	, drug_exposure_end_date
 	, DATE_PART('day', drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure ---Calculates the days of exposure to the drug so at the end we can subtract the SUM of these days from the total days in the era.
     --, datediff(day, drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure 원본코드
-into cteDrugTarget1 FROM  cteDrugPreTarget;
+FROM  cteDrugPreTarget;
 
 
 --------------------------------------------#cteEndDates1
+create temp table cteEndDates1 as
 SELECT
 	person_id
 	, ingredient_concept_id
 	, CURRENT_DATE + INTERVAL '-30 day' AS end_date -- unpad the end date
 	--, dateadd(day, -30, event_date) AS end_date -- unpad the end date 원본코드
-into cteEndDates1 FROM
+FROM
 (
 	SELECT
 		person_id
