@@ -80,7 +80,7 @@ select
 		when form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and in_pat_cors_type in ('11', '21', '31') then TO_DATE(recu_fr_dt, 'yyyymmdd') + vscn - 1
 		else TO_DATE(recu_fr_dt, 'yyyymmdd')
 	end as visit_end_date,
-	null as to_number(visit_end_time),
+	null as visit_end_time,
 	44818517 as visit_type_concept_id,
 	null as provider_id,
 	ykiho_id as care_site_id,
