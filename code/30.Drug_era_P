@@ -22,6 +22,8 @@
 	 gap_days						INTEGER	      NULL
 );
 
+             --drug_era_id	INTEGER	 identity(1,1)    NOT NULL , 원본코드
+
 --drop table drug_era;
 /**************************************
  2. 1단계: 필요 데이터 조회
@@ -35,7 +37,8 @@ SELECT
 	, c.concept_id AS ingredient_concept_id
 	, d.drug_exposure_start_date AS drug_exposure_start_date
 	, d.days_supply AS days_supply
-	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
+	, COALESCE(d.drug_exposure_end_date, d.drug_exposure_start_date + d.days_supply * INTERVAL '1 day' ), CURRENT_DATE + INTERVAL drug_exposure_start_date '1 day') AS drug_exposure_end_date
+	--,, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date 원본코드
 FROM drug_exposure d
 JOIN concept_ancestor ca 
 ON ca.descendant_concept_id = d.drug_concept_id
@@ -53,7 +56,8 @@ SELECT
 	, drug_exposure_start_date
 	, days_supply
 	, drug_exposure_end_date
-	, datediff(day, drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure ---Calculates the days of exposure to the drug so at the end we can subtract the SUM of these days from the total days in the era.
+	, DATE_PART('day', drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure ---Calculates the days of exposure to the drug so at the end we can subtract the SUM of these days from the total days in the era.
+    --, datediff(day, drug_exposure_start_date, drug_exposure_end_date) AS days_of_exposure 원본코드
 into cteDrugTarget1 FROM  cteDrugPreTarget;
 
 
@@ -61,7 +65,8 @@ into cteDrugTarget1 FROM  cteDrugPreTarget;
 SELECT
 	person_id
 	, ingredient_concept_id
-	, dateadd(day, -30, event_date) AS end_date -- unpad the end date
+	, CURRENT_DATE + INTERVAL '-30 day' AS end_date -- unpad the end date
+	--, dateadd(day, -30, event_date) AS end_date -- unpad the end date 원본코드
 into cteEndDates1 FROM
 (
 	SELECT
@@ -87,7 +92,8 @@ into cteEndDates1 FROM
 		SELECT
 			person_id
 			, ingredient_concept_id
-			, dateadd(day,30,drug_exposure_end_date)
+			, CURRENT_DATE + INTERVAL '30 day'
+		  --, dateadd(day,30,drug_exposure_end_date)원본코드
 			, 1 AS event_type
 			, NULL
 		FROM cteDrugTarget1
@@ -128,7 +134,7 @@ SELECT
 	, MIN(drug_exposure_start_date) AS drug_era_start_date
 	, drug_era_end_date
 	, COUNT(*) AS drug_exposure_count
-	, DATEDIFF(DAY, MIN(drug_exposure_start_date),drug_era_end_date) -SUM(days_of_exposure) AS gap_days
+	, DATE_PART('DAY', MIN(drug_exposure_start_date),drug_era_end_date) -SUM(days_of_exposure) AS gap_days
 	/*, EXTRACT(EPOCH FROM (drug_era_end_date - MIN(drug_exposure_start_date)) - SUM(days_of_exposure))/86400 AS gap_day
 			  ---dividing by 86400 puts the integer in the "units" of days.
 			  ---There are no actual units on this, it is just an integer, but we want it to represent days and dividing by 86400 does that.*/
