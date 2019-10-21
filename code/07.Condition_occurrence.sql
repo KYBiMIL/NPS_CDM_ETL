@@ -55,7 +55,7 @@ select
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.concept_id as condition_concept_id,
-	to_date(m.recu_fr_dt, 112) as condition_start_date,
+	to_date(m.recu_fr_dt, 'yyyymmdd') as condition_start_date,
 	m.visit_end_date as condition_end_date,
 	m.sick_order as condition_type_concept_id,
 	null as stop_reason,
@@ -66,6 +66,6 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '04', '06', '07', '10', '12') then to_date(b.recu_fr_dt, 112) + b.vscn - 1 
-			when b.form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') then to_date(b.recu_fr_dt, 112) + b.vscn - 1
+		case when b.form_cd in ('02', '04', '06', '07', '10', '12') then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn - 1 
+			when b.form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn - 1
 	);
