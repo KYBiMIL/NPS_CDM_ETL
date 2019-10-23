@@ -21,24 +21,28 @@
 	3) 사망 이후 가지는 자격 제외
 ***************************************/ 
 
+
+
+
 -- step 1
 create global temporary table observation_period_temp1
 (
 KCDCODE VARCHAR(20),
 NAME varchar(255),
 CONCEPT_ID INTEGER, 
-CONCEPT_NAME varchar(255)
+CONCEPT_NAME VARCHAR(255)
 )
 on commit preserve rows;
+
 
 create table observation_period_temp1 as 
 select
       a.person_id as person_id, 
-      case when a.stnd_y >= b.year_of_birth then to_date(a.stnd_y || '0101', 112) 
-            else to_date(b.year_of_birth || '0101', 112) 
+      case when a.stnd_y >= b.year_of_birth then to_date(a.stnd_y || '0101', 'yyyymmdd') 
+            else to_date(b.year_of_birth || '0101', 'yyyymmdd') 
       end as observation_period_start_date, --관측시작일
-      case when to_date(a.stnd_y || '1231', 112) > c.death_date then c.death_date
-            else to_date(a.stnd_y || '1231', 112)
+      case when to_date(a.stnd_y || '1231', 'yyyymmdd') > c.death_date then c.death_date
+            else to_date(a.stnd_y || '1231', 'yyyymmdd')
       end as observation_period_end_date --관측종료일
 from cohort_cdm.NHID_JK a,
       cohort_cdm.person b left join cohort_cdm.death c
@@ -53,7 +57,6 @@ from observation_period_temp1
 where observation_period_start_date < observation_period_end_date; -- 사망 이후 가지는 자격을 제외시키는 쿼리
 --(12132529개 행이 영향을 받음), 00:08
 
-
 -- step 3
 create table observation_period_temp3 as
 select 
@@ -62,7 +65,7 @@ select
 		left join
 		observation_period_temp2 b
 		on a.person_id = b.person_id
-			and a.id = cast(b.id as int)-1
+			and a.id = to_date(b.id as int)-1
 	order by person_id, id;
 --(12132529개 행이 영향을 받음), 00:15
 
