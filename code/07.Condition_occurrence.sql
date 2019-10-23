@@ -33,6 +33,7 @@ CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE (
 );
 
 
+
 /**************************************
  2. 데이터 입력
     1) 관측시작일: 자격년도.01.01이 디폴트. 출생년도가 그 이전이면 출생년도.01.01
@@ -51,7 +52,7 @@ INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
 select 
-	to_number(to_char(m.master_seq) || to_char(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
+	to_number(m.master_seq || (ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc))) as condition_occurrence_id,
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.concept_id as condition_concept_id,
@@ -68,4 +69,24 @@ from (
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
 		case when b.form_cd in ('02', '04', '06', '07', '10', '12') then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn - 1 
 			when b.form_cd in ('03', '05', '08', '09', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn - 1
-	);
+            else to_date(b.recu_fr_dt, 'yyyymmdd')
+		end as visit_end_date,
+		c.sick_sym,
+		case when c.sick_sym=b.main_sick then '44786627' --primary condition
+			when c.sick_sym=b.sub_sick then '44786629' --secondary condition
+			else '45756845' --third condition
+		end as sick_order,
+		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
+	from (select master_seq, person_id, key_seq, seq_no from seq_master where source_table='140') a, 
+		cohort_cdm.NHID_20T b,
+		cohort_cdm.NHID_40T  c,
+		observation_period d --추가
+	where a.person_id=b.person_id
+	and a.key_seq=b.key_seq
+	and a.key_seq=c.key_seq
+	and a.seq_no=c.seq_no
+	and b.person_id=d.person_id --추가
+	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date as m, --추가
+	cohort_cdm.CONDITION_MAPPINGTABLE as n
+where m.sick_sym=n.kcdcode
+	  );
