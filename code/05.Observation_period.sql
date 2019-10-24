@@ -50,30 +50,46 @@ from cohort_cdm.NHID_JK a,
 where a.person_id=b.person_id;
 --(12132633개 행이 영향을 받음), 00:05
 
+create global temporary table observation_period_temp2
+(
+observation_period_start_date VARCHAR(255),
+observation_period_end_date varchar(255)
+)
+on commit preserve rows;
+
 -- step 2
 create table observation_period_temp2 as
-select *, row_number() over(partition by person_id order by observation_period_start_date, observation_period_end_date) AS id
-from observation_period_temp1
-where observation_period_start_date < observation_period_end_date; -- 사망 이후 가지는 자격을 제외시키는 쿼리
+SELECT ROW_NUMBER() OVER(PARTITION BY PERSON_ID ORDER BY OBSERVATION_PERIOD_START_DATE, OBSERVATION_PERIOD_END_DATE) AS NUM, *, AS ID  -- 이부분을 fix
+FROM OBSERVATION_PERIOD_TEMP1
+WHERE OBSERVATION_PERIOD_START_DATE < OBSERVATION_PERIOD_END_DATE; -- 사망 이후 가지는 자격을 제외시키는 쿼리
 --(12132529개 행이 영향을 받음), 00:08
 
 -- step 3
 create table observation_period_temp3 as
-select 
-	a.*, datediff(day, a.observation_period_end_date, b.observation_period_start_date) as days
+select a.*, datediff(day, a.observation_period_end_date, b.observation_period_start_date) as days
 	from observation_period_temp2 a
 		left join
 		observation_period_temp2 b
 		on a.person_id = b.person_id
-			and a.id = to_date(b.id as int)-1
+			and a.id = to_date(b.id, as number)-1
 	order by person_id, id;
 --(12132529개 행이 영향을 받음), 00:15
+
+create global temporary table observation_period_temp4
+(
+person_id VARCHAR(20),
+sumday varchar(255),
+CONCEPT_ID INTEGER, 
+CONCEPT_NAME VARCHAR(255)
+)
+on commit preserve rows;
+
 
 -- step 4
 create table observation_period_temp4 as
 select
 	a.*, CASE WHEN id=1 THEN 1
-   ELSE SUM(CASE WHEN DAYS>1 THEN 1 ELSE 0 END) OVER(PARTITION BY person_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)+1
+   ELSE SUM(CASE WHEN DAYS>1 THEN 1 ELSE 0 END) OVER(PARTITION BY person_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)||1
    END AS sumday
    from observation_period_temp3 a
    order by person_id, id;
