@@ -1,7 +1,7 @@
 /**************************************
  --encoding : UTF-8
- --Author: 조재형
- --Date: 2017.02.21
+ --Author: 
+ --Date: 2019.10.24
  
 @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
 @ResultDatabaseSchema : DB for NHIS-NSC in CDM format
