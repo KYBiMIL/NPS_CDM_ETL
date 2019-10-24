@@ -1,7 +1,7 @@
 /**************************************
  --encoding : UTF-8
- --Author: 이성원
- --Date: 2017.02.08
+ --Author: 고인석,박현서
+ --Date: 2019.10.24
  
 @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
 @ResultDatabaseSchema : DB for NHIS-NSC in CDM format
