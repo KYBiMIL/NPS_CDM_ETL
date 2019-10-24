@@ -15,7 +15,7 @@ cohort_cdm : DB for NHIS-NSC in CDM format
 
 /**************************************
  @Author: OHDSI
- @Date: 2017.02.21 실행
+ @Date: 2019.10.24
  
  @Database: NHIS_NSC (16호 서버)
  @Description: OHDSI에서 생성한 condition_era 생성 쿼리
