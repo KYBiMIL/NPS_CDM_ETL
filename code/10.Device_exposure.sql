@@ -1,7 +1,7 @@
 /**************************************
  --encoding : UTF-8
- --Author: 조재형
- --Date: 2017.02.15
+ --Author: 
+ --Date: 2019.10.24
  
 cohort_cdm : DB containing NHIS National Sample cohort DB
 cohort_cdm : DB for NHIS-NSC in CDM format
