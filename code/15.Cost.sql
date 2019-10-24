@@ -1,7 +1,7 @@
 /**************************************
  --encoding : UTF-8
- --Author: 이성원
- --Date: 2017.02.08
+ --Author: 
+ --Date: 2019.10.24
  
 cohort_cdm : DB containing NHIS National Sample cohort DB
 cohort_cdm : DB for NHIS-NSC in CDM format
