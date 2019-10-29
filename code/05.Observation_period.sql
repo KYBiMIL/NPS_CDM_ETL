@@ -25,7 +25,7 @@ create global temporary table cohort_cdm.Observation_period
     observation_period_id integer primary key,
     person_id integer not null,
     observation_period_start_date date,
-    observation_period_end_date data,
+    observation_period_end_date date,
     period_type_concept_id integer not null
 )
 on commit preserve rows;
@@ -51,7 +51,7 @@ create global temporary table observation_period_temp1
     observation_period_id integer primary key,
     person_id integer not null,
     observation_period_start_date date,
-    observation_period_end_date data,
+    observation_period_end_date date,
     period_type_concept_id integer not null
 )
 on commit preserve rows;
@@ -70,7 +70,7 @@ create global temporary table observation_period_temp2
     observation_period_id integer primary key,
     person_id integer not null,
     observation_period_start_date date,
-    observation_period_end_date data,
+    observation_period_end_date date,
     period_type_concept_id integer not null
 )
 on commit preserve rows;
@@ -91,7 +91,7 @@ create global temporary table observation_period_temp3
     observation_period_id integer primary key,
     person_id integer not null,
     observation_period_start_date date,
-    observation_period_end_date data,
+    observation_period_end_date date,
     period_type_concept_id integer not null
 )
 on commit preserve rows;
@@ -112,7 +112,7 @@ create global temporary table observation_period_temp4
     observation_period_id integer primary key,
     person_id integer not null,
     observation_period_start_date date,
-    observation_period_end_date data,
+    observation_period_end_date date,
     period_type_concept_id integer not null
 )
 on commit preserve rows;
