@@ -101,11 +101,11 @@ select
 	9202 as visit_concept_id,
 	to_date(a.hchk_year ||'0101','yyyymmdd')as visit_start_date,
 	null as visit_start_date,
-	to_date(b.hchk_year ||'0101','yyyymmdd')as visit_end_date,
+	to_date(a.hchk_year ||'0101','yyyymmdd')as visit_end_date,
 	null as visit_end_date,
 	44818517 as visit_type_concept_id,
 	null as provider_id,
 	null as care_site_id,
 	b.master_seq as visit_source_value,
 	null as visit_source_concept_id
-from cohort_cdm.NHID_GJ a JOIN cohort_cdm.VISIT_OCCURRENCE b on a.person_id=b.person_id and a.hchk_year=b.hchk_year;
+from cohort_cdm.NHID_GJ a JOIN cohort_cdm.seq_master b on a.person_id=b.person_id and a.hchk_year=b.hchk_year;
