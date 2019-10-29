@@ -75,7 +75,7 @@ create global temporary table observation_period_temp2
 )
 on commit preserve rows;
 
-select a.*, datediff(day, a.observation_period_end_date, b.observation_period_start_date) as days
+select a.*, SYSDATE - day, a.observation_period_end_date, b.observation_period_start_date as days
 	from observation_period_temp2 a
 		left join
 		observation_period_temp2 b
