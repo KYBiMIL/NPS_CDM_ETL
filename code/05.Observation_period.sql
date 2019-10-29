@@ -20,9 +20,15 @@
 	2) 관측종료일: 자격년도.12.31이 디폴트. 사망년월이 그 이후면 사망년.월.마지막날
 	3) 사망 이후 가지는 자격 제외
 ***************************************/ 
-
-
-
+create global temporary table cohort_cdm.Observation_period
+(
+    observation_period_id integer primary key,
+    person_id integer not null,
+    observation_period_start_date date,
+    observation_period_end_date data,
+    period_type_concept_id integer not null
+)
+on commit preserve rows;
 
 -- step 1
 create global temporary table observation_period_temp1
