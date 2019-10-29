@@ -31,17 +31,7 @@ create global temporary table cohort_cdm.Observation_period
 on commit preserve rows;
 
 -- step 1
-create global temporary table observation_period_temp1
-(
-KCDCODE VARCHAR(20),
-NAME varchar(255),
-CONCEPT_ID INTEGER, 
-CONCEPT_NAME VARCHAR(255)
-)
-on commit preserve rows;
 
-
-create table observation_period_temp1 as 
 select
       a.person_id as person_id, 
       case when a.stnd_y >= b.year_of_birth then to_date(a.stnd_y || '0101', 'yyyymmdd') 
@@ -56,22 +46,35 @@ from cohort_cdm.NHID_JK a,
 where a.person_id=b.person_id;
 --(12132633개 행이 영향을 받음), 00:05
 
-create global temporary table observation_period_temp2
+create global temporary table observation_period_temp1
 (
-observation_period_start_date VARCHAR(255),
-observation_period_end_date varchar(255)
+    observation_period_id integer primary key,
+    person_id integer not null,
+    observation_period_start_date date,
+    observation_period_end_date data,
+    period_type_concept_id integer not null
 )
 on commit preserve rows;
 
 -- step 2
-create table observation_period_temp2 as
+
 SELECT ROW_NUMBER() OVER(PARTITION BY PERSON_ID ORDER BY OBSERVATION_PERIOD_START_DATE, OBSERVATION_PERIOD_END_DATE) AS NUM, *, AS ID  -- 이부분을 fix
 FROM OBSERVATION_PERIOD_TEMP1
 WHERE OBSERVATION_PERIOD_START_DATE < OBSERVATION_PERIOD_END_DATE; -- 사망 이후 가지는 자격을 제외시키는 쿼리
 --(12132529개 행이 영향을 받음), 00:08
 
 -- step 3
-create table observation_period_temp3 as
+
+create global temporary table observation_period_temp2
+(
+    observation_period_id integer primary key,
+    person_id integer not null,
+    observation_period_start_date date,
+    observation_period_end_date data,
+    period_type_concept_id integer not null
+)
+on commit preserve rows;
+
 select a.*, datediff(day, a.observation_period_end_date, b.observation_period_start_date) as days
 	from observation_period_temp2 a
 		left join
@@ -81,18 +84,18 @@ select a.*, datediff(day, a.observation_period_end_date, b.observation_period_st
 	order by person_id, id;
 --(12132529개 행이 영향을 받음), 00:15
 
-create global temporary table observation_period_temp4
+
+-- step 4
+create global temporary table observation_period_temp3
 (
-person_id VARCHAR(20),
-sumday varchar(255),
-CONCEPT_ID INTEGER, 
-CONCEPT_NAME VARCHAR(255)
+    observation_period_id integer primary key,
+    person_id integer not null,
+    observation_period_start_date date,
+    observation_period_end_date data,
+    period_type_concept_id integer not null
 )
 on commit preserve rows;
 
-
--- step 4
-create table observation_period_temp4 as
 select
 	a.*, CASE WHEN id=1 THEN 1
    ELSE SUM(CASE WHEN DAYS>1 THEN 1 ELSE 0 END) OVER(PARTITION BY person_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)||1
@@ -103,7 +106,17 @@ select
 
 
 -- step 5
-create table cohort_cdm.OBSERVATION_PERIOD as
+
+create global temporary table observation_period_temp4
+(
+    observation_period_id integer primary key,
+    person_id integer not null,
+    observation_period_start_date date,
+    observation_period_end_date data,
+    period_type_concept_id integer not null
+)
+on commit preserve rows;
+
 select identity(int, 1, 1) as observation_period_id,
 	person_id,
 	min(observation_period_start_date) as observation_period_start_date,
