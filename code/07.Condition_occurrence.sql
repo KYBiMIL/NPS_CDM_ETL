@@ -1,7 +1,7 @@
 =/**************************************
  --encoding : UTF-8
  --Author: 이성원
- --Date: 2017.01.31
+ --Date: 2019.10.30
  
 @NHISDatabaseSchema : DB containing NHIS National Sample cohort DB
 @NHIS_JK: JK table in NHIS NSC
