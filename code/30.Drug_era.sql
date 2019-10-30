@@ -20,6 +20,7 @@ cohort_cdm : DB for NHIS-NSC in CDM format
      drug_era_end_date				DATE 	  NOT NULL ,
      drug_exposure_count			INTEGER			NULL, 
 	 gap_days						INTEGER			NULL
+	  primary key(DRUG_ERA)
 );
 
 /**************************************
