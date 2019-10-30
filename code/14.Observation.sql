@@ -50,43 +50,8 @@ CREATE TABLE cohort_cdm.OBSERVATION
 	 qualifier_source_value				VARCHAR(50) 				NULL
 	);
     
-create global temporary table observation_mapping
-(
-    observation_id						NUMBER						NOT NULL , 
-     person_id							INTEGER						NOT NULL ,
-     observation_concept_id				INTEGER						NOT NULL ,
-     observation_date					DATE						NOT NULL ,
-     observation_time					DATE						NULL,  
-     observation_type_concept_id		integer		 				NULL,  
-	 value_as_number					float		 				NULL,
-	 value_as_string					VARCHAR(50) 				NULL,
-	 value_as_concept_id				integer		 				NULL,
-	 qualifier_concept_id				integer		 				NULL,
-	 unit_concept_id					integer						NULL,
-	 provider_id						integer						NULL,
-	 visit_occurrence_id				NUMBER						NULL,
-	 observation_source_value			VARCHAR(50) 				NULL,
-	 observation_source_concept_id		integer						NULL,
-	 unit_source_value					VARCHAR(50) 				NULL,
-	 qualifier_source_value				VARCHAR(50) 				NULL
-)
-on commit preserve rows;        
-	
-    
-
 -- observation mapping table(temp)
-CREATE TABLE observation_mapping
-(
-     meas_type						varchar(50)					NULL , 
-     id_value						varchar(50)					NULL ,
-     answer							NUMBER						NULL ,
-     observation_concept_id			NUMBER						NULL ,
-	 observation_type_concept_id	NUMBER						NULL ,
-	 observation_unit_concept_id	NUMBER						NULL ,
-	 value_as_concept_id			NUMBER						NULL ,
-	 value_as_number				float						NULL 
-);
-    
+
 create global temporary table observation_mapping
 (
      meas_type						varchar(50)					NULL , 
