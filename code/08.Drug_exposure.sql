@@ -170,6 +170,7 @@ CREATE TABLE cohort_cdm.DRUG_EXPOSURE (
 	 drug_source_concept_id			INTEGER			NULL ,
 	 route_source_value				VARCHAR(50)		NULL ,
 	 dose_unit_source_value			VARCHAR(50)		NULL
+	primary key (person_id)
     );
 
 	
