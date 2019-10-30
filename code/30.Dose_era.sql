@@ -20,6 +20,7 @@ cohort_cdm : DB for NHIS-NSC in CDM format
      dose_value						float  NOT NULL ,
      dose_era_start_date			DATE 		NOT	NULL, 
 	 dose_era_end_date				DATE 		NOT	NULL
+	 primary key (dose_era_id)
 );
 
 
