@@ -118,8 +118,8 @@ from
 from cohort_cdm.NHID_30T AS A
 join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
-   where cast(DD_MQTY_EXEC_FREQ as float)<1
-   and cast(DD_MQTY_EXEC_FREQ as float)>=0) x
+   where to_date(DD_MQTY_EXEC_FREQ as float)<1
+   and to_date(DD_MQTY_EXEC_FREQ as float)>=0) x
    join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
@@ -129,7 +129,7 @@ from
 from cohort_cdm.NHIS_30T AS A
 join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
-   where cast(DD_MQTY_EXEC_FREQ as float)>1) x
+   where to_date(DD_MQTY_EXEC_FREQ as float)>1) x
    join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
@@ -140,7 +140,7 @@ from
 from cohort_cdm.NHID_60T AS A
 join cohort_cdm.DRUG_MAPPINGTABLE B
 on A.div_cd=b.source_code 
-   where cast(DD_MQTY_FREQ as float)>1) x
+   where to_date(DD_MQTY_FREQ as float)>1) x
    join cohort_cdm.concept b
    on x.concept_id= b.concept_id
 
@@ -165,7 +165,7 @@ CREATE TABLE cohort_cdm.DRUG_EXPOSURE (
 	 dose_unit_concept_id			INTEGER			NULL ,
 	 lot_number						VARCHAR(50)		NULL ,
      provider_id					INTEGER			NULL , 
-     visit_occurrence_id			NUMBER			NULL , 
+     visit_occurrence_id			INTEGER			NULL , 
      drug_source_value				VARCHAR(50)		NULL ,
 	 drug_source_concept_id			INTEGER			NULL ,
 	 route_source_value				VARCHAR(50)		NULL ,
