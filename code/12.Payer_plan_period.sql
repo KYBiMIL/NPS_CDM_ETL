@@ -45,7 +45,7 @@ CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
 INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer_plan_period_start_date, payer_plan_period_end_date, payer_source_value, plan_source_value, family_source_value)
 	SELECT	a.person_id+STND_Y as payer_plan_period_id,
 			a.person_id as person_id,
-			cast(to_char( STND_Y || '0101' ,23) as date) as payer_plan_period_start_date,
+			to_date(STND_Y || '0101' ,'yyyymmdd') /* as date */ as payer_plan_period_start_date,
 			case when year < death_date then a.year
 			when year > death_date then death_date
 			else a.year
@@ -54,5 +54,5 @@ INSERT INTO cohort_cdm.PAYER_PLAN_PERIOD (payer_plan_period_id, person_id, payer
 			IPSN_TYPE_CD as plan_source_value,
 			family_source_value = null
 	FROM 
-			(select person_id, STND_Y, IPSN_TYPE_CD, cast(to_char(cast(YEAR as varchar) || '1231' ,23) as date) as year from cohort_cdm.NHID_JK ) a left join cohort_cdm.Death b
+			(select person_id, STND_Y, IPSN_TYPE_CD, to_date((YEAR as varchar) || '1231' ,'yyyymmdd') /* as date */) as year from cohort_cdm.NHID_JK ) a left join cohort_cdm.Death b
 	  		on a.person_id=b.person_id
