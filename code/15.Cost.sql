@@ -24,7 +24,7 @@ DEVICE_MAPPINGTABLE : mapping table between EDI and OMOP vocabulary
  1. 테이블 생성
 ***************************************/ 
 CREATE TABLE cohort_cdm.COST (
-	cost_id	bigint	primary key,
+	cost_id	NUMBER	primary key,
 	cost_event_id	NUMBER	not null,
 	cost_domain_id	varchar(20)	not null,
 	cost_type_concept_id	integer	not null,
@@ -47,34 +47,6 @@ CREATE TABLE cohort_cdm.COST (
 	revenue_code_source_value	varchar(50),
 	drg_source_value	varchar(50)
 );
-
-create global temporary table cohort_cdm.COST
-(
-    cost_id	bigint	primary key,
-	cost_event_id	NUMBER	not null,
-	cost_domain_id	varchar(20)	not null,
-	cost_type_concept_id	integer	not null,
-	currency_concept_id	integer,
-	total_charge	float,
-	total_cost	float,
-	total_paid	float,
-	paid_by_payer	float,
-	paid_by_patient	float,
-	paid_patient_copay	float,
-	paid_patient_coinsurance	float,
-	paid_patient_deductiable	float,
-	paid_by_primary	float,
-	paid_ingredient_cost	float,
-	paid_dispensing_fee	float,
-	payer_plan_period_id	NUMBER,
-	amount_allowed	float,
-	revenue_code_concept_id	integer,
-	drg_concept_id	integer,
-	revenue_code_source_value	varchar(50),
-	drg_source_value	varchar(50)
-)
-on commit preserve rows; 
-
 
 /**************************************
  2. 데이터 입력
