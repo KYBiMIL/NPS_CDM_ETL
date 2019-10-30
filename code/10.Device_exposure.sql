@@ -47,22 +47,7 @@ CREATE TABLE cohort_cdm.DEVICE_EXPOSURE (
 	 device_source_concept_id		integer			NULL 
     );
 
-create global temporary table cohort_cdm.DEVICE_EXPOSURE
-(
-    device_exposure_id				NUMBER	 		PRIMARY KEY , 
-     person_id						INTEGER			NOT NULL , 
-     divce_concept_id				INTEGER			NOT NULL , 
-     device_exposure_start_date		DATE			NOT NULL , 
-     device_exposure_end_date		DATE			NULL , 
-     device_type_concept_id			INTEGER			NOT NULL , 
-     unique_device_id				VARCHAR(20)		NULL , 
-     quantity						float			NULL , 
-     provider_id					INTEGER			NULL , 
-     visit_occurrence_id			NUMBER			NULL , 
-	 device_source_value			VARCHAR(50)		NULL ,
-	 device_source_concept_id		integer			NULL 
-)
-on commit preserve rows;
+
 
 --drop table cohort_cdm.PROCEDURE_OCCURRENCE;
 
