@@ -38,19 +38,6 @@ CREATE TABLE cohort_cdm.PAYER_PLAN_PERIOD
 	 family_source_value				VARCHAR(50) 				NULL   
 	); -- DROP TABLE @ResultDatabaseSchema.PAYER_PLAN_PERIOD
     
-create global temporary table cohort_cdm.PAYER_PLAN_PERIOD
-(
-     payer_plan_period_id				NUMBER						NOT NULL , 
-     person_id							INTEGER						NOT NULL ,
-     payer_plan_period_start_date		DATE						NOT NULL ,
-     payer_plan_period_end_date			DATE						NOT NULL ,
-     payer_source_value					VARCHAR(50) 				NULL,  
-     plan_source_value					VARCHAR(50) 				NULL,  
-	 family_source_value				VARCHAR(50) 				NULL   
-)
-on commit preserve rows;
- 
- 
 /**************************************
  2. 데이터 입력 및 확인 -- 02:57, (12132633개 행이 영향을 받음)
 ***************************************/  
