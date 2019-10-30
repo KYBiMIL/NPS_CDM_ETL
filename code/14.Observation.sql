@@ -48,6 +48,7 @@ CREATE TABLE cohort_cdm.OBSERVATION
 	 observation_source_concept_id		integer						NULL,
 	 unit_source_value					VARCHAR(50) 				NULL,
 	 qualifier_source_value				VARCHAR(50) 				NULL
+	    primary key(observation_id)
 	);
     
 -- observation mapping table(temp)
@@ -66,6 +67,8 @@ create global temporary table observation_mapping
 on commit preserve rows;        
 	
 -- insert mapping data
+select * from Observation
+
 INSERT ALL
 INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 1, 4058267, 44814721, null, null, null)
 INTO observation_mapping VALUES (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('HCHK_PMH_CD1', '20', 2, 43021368, 44814721, null, null, null)
@@ -193,7 +196,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -250,7 +253,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			to_Date(a.hchk_year || '0101', 'yyyymmdd') /* as date */ as observation_date,
+			to_Date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -326,7 +329,7 @@ select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_se
 				end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			to_date(a.hchk_year || '0101', 'yyyymmdd') /* as date */ as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -370,7 +373,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			to_date(a.hchk_year || '0101', 'yyyymmdd') /* as date */ as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -414,7 +417,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 	select	row_number() OVER(order by a.person_id asc) as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			to_date(a.STND_Y || '0101', 'yyyymmdd') /* as date */ as observation_date,
+			to_date(a.STND_Y || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
