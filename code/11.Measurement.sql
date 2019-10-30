@@ -48,45 +48,12 @@ CREATE TABLE cohort_cdm.OBSERVATION
 	 observation_source_concept_id		integer						NULL,
 	 unit_source_value					VARCHAR(50) 				NULL,
 	 qualifier_source_value				VARCHAR(50) 				NULL
+	    primary key (observation_id)
 	);
-
-create global temporary table cohort_cdm.OBSERVATION
-(
-     observation_id						NUMBER						NOT NULL , 
-     person_id							INTEGER						NOT NULL ,
-     observation_concept_id				INTEGER						NOT NULL ,
-     observation_date					DATE						NOT NULL ,
-     observation_time					DATE						NULL,  
-     observation_type_concept_id		integer		 				NULL,  
-	 value_as_number					float		 				NULL,
-	 value_as_string					VARCHAR(50) 				NULL,
-	 value_as_concept_id				integer		 				NULL,
-	 qualifier_concept_id				integer		 				NULL,
-	 unit_concept_id					integer						NULL,
-	 provider_id						integer						NULL,
-	 visit_occurrence_id				NUMBER						NULL,
-	 observation_source_value			VARCHAR(50) 				NULL,
-	 observation_source_concept_id		integer						NULL,
-	 unit_source_value					VARCHAR(50) 				NULL,
-	 qualifier_source_value				VARCHAR(50) 				NULL
-)
-on commit preserve rows;    
      
 	
 	
 -- observation mapping table(temp)
-CREATE TABLE observation_mapping
-    (
-     meas_type						varchar(50)					NULL , 
-     id_value						varchar(50)					NULL ,
-     answer							NUMBER						NULL ,
-     observation_concept_id			NUMBER						NULL ,
-	 observation_type_concept_id	NUMBER						NULL ,
-	 observation_unit_concept_id	NUMBER						NULL ,
-	 value_as_concept_id			NUMBER						NULL ,
-	 value_as_number				float						NULL 
-	);
-    
 create global temporary table observation_mapping
 (
      meas_type						varchar(50)					NULL , 
@@ -230,7 +197,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -287,7 +254,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -323,22 +290,6 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
  2. 09년부터 응답이 바뀌는 음주 수치 입력 (693930개 행이 영향을 받음)
 ***************************************/ 
 --temp mapping table
-
-
-
-CREATE TABLE observation_mapping09
-    (
-     meas_type						varchar(50)					NULL , 
-     id_value						varchar(50)					NULL ,
-     answer							NUMBER						NULL ,
-     observation_concept_id			NUMBER						NULL ,
-	 observation_type_concept_id	NUMBER						NULL ,
-	 observation_unit_concept_id	NUMBER						NULL ,
-	 value_as_concept_id			NUMBER						NULL ,
-	 value_as_number				float						NULL 
-	)
-;
-
 create global temporary table observation_mapping09
 (
      meas_type						varchar(50)					NULL , 
@@ -373,7 +324,7 @@ select	case	when a.meas_type = 'TM1_DRKQTY_RSPS_CD' then cast(concat(c.master_se
 				end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -417,7 +368,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 					end as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.hchk_year || '0101', 23)as date) as observation_date,
+			to_date(a.hchk_year || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
@@ -460,7 +411,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 	select	row_number() OVER(order by a.person_id asc) as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(to_char(a.STND_Y || '0101', 23)as date) as observation_date,
+			to_date(a.STND_Y || '0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null
