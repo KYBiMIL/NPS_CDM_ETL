@@ -1,7 +1,7 @@
 /**************************************
  --encoding : UTF-8
  --Author: 고인석                                           **미확인 상태
- --Date: 2017.01.26
+ --Date: 2019.10.30
  
  @cohort_cdm : DB containing NHIS National Sample cohort DB
  @NHID_JK: JK table in NHIS NSC
