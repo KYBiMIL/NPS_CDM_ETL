@@ -45,6 +45,7 @@ CREATE TABLE cohort_cdm.DEVICE_EXPOSURE (
      visit_occurrence_id			NUMBER			NULL , 
 	 device_source_value			VARCHAR(50)		NULL ,
 	 device_source_concept_id		integer			NULL 
+	primary key(device_exposure_id)
     );
 
 
