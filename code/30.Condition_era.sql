@@ -35,6 +35,7 @@ CREATE TABLE cohort_cdm.CONDITION_ERA  (
      condition_era_start_date			DATE      NOT NULL ,
      condition_era_end_date				DATE 	  NOT NULL ,
      condition_occurrence_count			INTEGER			NULL 
+	primary key (condition_era_id)
 ); 
 
 	 
