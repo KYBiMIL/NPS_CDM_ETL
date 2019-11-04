@@ -66,17 +66,17 @@ SELECT a.ykiho_id,
 	end as place_of_service_concept_id,
 	a.ykiho_sido as location_id,
 	a.ykiho_id as care_site_source_value,
-	(a.ykiho_gubun_cd + '/' + (case when len(a.org_type) = 1 then '0' + org_type else org_type end)) as place_of_service_source_value
+	a.ykiho_gubun_cd || '/' || (case when length(to_number(a.org_type)) = 1 then '0' else org_type end)||org_type as place_of_service_source_value
 into #temp
 
-FROM @NHISNSC_rawdata.@NHIS_YK a, (select ykiho_id, max(stnd_y) as max_stnd_y
-	from @NHISNSC_rawdata.@NHIS_YK c
+FROM cohort_cdm.NHID_YK a, (select ykiho_id, max(stnd_y) as max_stnd_y
+	from cohort_cdm.NHID_YK c
 	group by ykiho_id) b
 where a.ykiho_id=b.ykiho_id
 and a.stnd_y=b.max_stnd_y
 ;
 
-INSERT INTO @NHISNSC_database.CARE_SITE
+INSERT INTO cohort_cdm.CARE_SITE
 select * from #temp
 group by YKIHO_ID, care_site_name, place_of_service_concept_id, location_id, care_site_source_value, place_of_service_source_value
 ;
