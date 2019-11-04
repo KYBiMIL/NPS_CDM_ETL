@@ -21,7 +21,7 @@
  1. Create table
 ***************************************/ 
 /*
-CREATE TABLE @NHISNSC_database.CONDITION_OCCURRENCE ( 
+CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE ( 
      condition_occurrence_id		BIGINT			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL , 
      condition_concept_id			INTEGER			NOT NULL , 
@@ -40,8 +40,8 @@ CREATE TABLE @NHISNSC_database.CONDITION_OCCURRENCE (
  1-1. Create temp mapping table
 ***************************************/
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
-into #mapping_table
-from @Mapping_database.source_to_concept_map a join @Mapping_database.CONCEPT b on a.target_concept_id=b.concept_id
+into mapping_table
+from cohort_cdm.source_to_concept_map a join cohort_cdm.CONCEPT b on a.target_concept_id=b.concept_id
 where a.invalid_reason is null and b.invalid_reason is null and a.domain_id='condition'
 ;
 
