@@ -54,7 +54,7 @@ SELECT '130', b.person_id, a.key_seq, a.seq_no
 FROM cohort_cdm.NHID_30T a, cohort_cdm.NHID_20T b
 WHERE a.key_seq=b.key_seq
 ;
-
+(select * from cohort_cdm.NHID_30T where rownum <= 1000)
 /**************************************
  3. Insert data of 40T
     : serial number is starting from 4000000001
@@ -100,13 +100,14 @@ SELECT 'GJT', person_id, hchk_year
 FROM cohort_cdm.NHID_GJ
 GROUP BY hchk_year, person_id
 ;
+
 /**************************************
  6. Insert data of JK table
 	: serial number is starting from 900000000001
 **************************************/
 -- 1) Reset the serial number
 CREATE SEQUENCE master_seq START WITH 900000000001 increment by 1;
-
+drop table master_seq;
 -- 2) Insert data
 INSERT INTO cohort_cdm.SEQ_MASTER
 	(source_table, person_id, stnd_y)
@@ -114,6 +115,10 @@ SELECT 'JKT', person_id, STND_Y
 FROM cohort_cdm.NHID_JK
 GROUP BY STND_Y, person_id;
 ;
+
+select * from seq_master 
+where source_table = 160
+
 
 /**************************************
  7. Deactivate the auto increment serial number
