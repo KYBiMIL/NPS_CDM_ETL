@@ -3,14 +3,14 @@
  --Author: SW Lee, JM Park
  --Date: 2018.09.01
  
- @NHISNSC_rawdata : DB containing NHIS National Sample cohort DB
- @NHISNSC_database : DB for NHIS-NSC in CDM format
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ @NHIDNSC_rawdata : DB containing NHIS National Sample cohort DB
+ @NHIDNSC_database : DB for NHIS-NSC in CDM format
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  --Description: Create Person table
 			   1) In sample cohort DB, person data are inserted as duplicated by years, which makes it possible to track the change of income quantiles, location and etc..
 			    In CDM, however, person should be unique, so the latest person data would be converted
@@ -22,7 +22,7 @@
  1. Create table
 ***************************************/  
 /*
-CREATE TABLE @NHISNSC_database.PERSON (
+CREATE TABLE cohort_cdm.PERSON (
      person_id						INTEGER		PRIMARY key , 
      gender_concept_id				INTEGER		NOT NULL , 
      year_of_birth					INTEGER		NOT NULL , 
@@ -52,7 +52,7 @@ CREATE TABLE @NHISNSC_database.PERSON (
 /**
 	1) More than 1 intervals + 5 full interval
 */
-INSERT INTO @NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -77,18 +77,18 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK m, 
+from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK x, (
+	from cohort_cdm.NHID_JK x, (
 	select person_id, max(age_group) as age_group
 	from (
 		select distinct person_id, age_group
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				group by person_id, age_group
 			) a
 			group by person_id
@@ -102,9 +102,9 @@ from @NHISNSC_rawdata.@NHIS_JK m,
 	and x.age_group=y.age_group
 	group by x.person_id, y.person_id, x.age_group, y.age_group) n, 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from @NHISNSC_rawdata.@NHIS_JK q, (
+	from cohort_cdm.NHID_JK q, (
 		select person_id, max(stnd_y) as stnd_y
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) o 
@@ -116,7 +116,7 @@ and m.person_id=o.person_id
 	2) More than 1 intervals + 5 full interval + include 0 interval
 		: There are 12 people who have more than two 0 intervals in JK table. Therefore, the birth year should be defined as the min(stnd_y) of 0 intervals
 */
-INSERT INTO @NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -141,24 +141,24 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK m, 
+from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK x, (
+	from cohort_cdm.NHID_JK x, (
 		select distinct person_id
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where age_group=0
 		and person_id in (
 		select person_id
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year  -- min(), max()의 year를 stnd_y로 변경해줌
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
@@ -166,7 +166,7 @@ from @NHISNSC_rawdata.@NHIS_JK m,
 			) b
 			where b.person_id not in (
 				select person_id 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
@@ -181,9 +181,9 @@ from @NHISNSC_rawdata.@NHIS_JK m,
 	and x.age_group=0
 	group by x.person_id) n,
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from @NHISNSC_rawdata.@NHIS_JK q, (
+	from cohort_cdm.NHID_JK q, (
 		select person_id, max(stnd_y) as stnd_y
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) o 
@@ -196,7 +196,7 @@ and m.person_id=o.person_id
 	3-1) More than 1 intervals + no 5 full interval + not include 0 interval + the year of interval change point is continuous
 */
 -- continuous interval data
-INSERT INTO @NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -221,26 +221,26 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK d1, 
+from cohort_cdm.NHID_JK d1, 
 (select x.person_id, min(y.min_stnd_y) as stnd_y
 from 
 
 (
 select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
-from @NHISNSC_rawdata.@NHIS_JK m, 
+from cohort_cdm.NHID_JK m, 
 (select distinct person_id, min_age_group
 from (
 	select person_id, min(age_group) as min_age_group
 	from (
 	select person_id, age_group, count(age_group) as age_group_cnt
-	from @NHISNSC_rawdata.@NHIS_JK
+	from cohort_cdm.NHID_JK
 	where person_id in (
 		select distinct person_id
 		from (
 			select distinct person_id
 			from (
 				select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year -- min(), max()의 year를 stnd_y로 대체
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				group by person_id, age_group
 			) a
 			group by person_id
@@ -248,7 +248,7 @@ from (
 		) b
 		where b.person_id not in (
 			select person_id 
-			from @NHISNSC_rawdata.@NHIS_JK
+			from cohort_cdm.NHID_JK
 			where person_id =b.person_id
 			group by person_id, age_group
 			having count(age_group) = 5
@@ -261,7 +261,7 @@ from (
 ) y
 where y.person_id not in (
 select distinct person_id
-from @NHISNSC_rawdata.@NHIS_JK
+from cohort_cdm.NHID_JK
 where person_id=y.person_id
 and age_group=0)) n
 where m.person_id=n.person_id
@@ -270,20 +270,20 @@ group by m.person_id, m.age_group
 
 (
 select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
-from @NHISNSC_rawdata.@NHIS_JK m, 
+from cohort_cdm.NHID_JK m, 
 (select distinct person_id, min_age_group
 from (
 	select person_id, min(age_group) as min_age_group
 	from (
 	select person_id, age_group, count(age_group) as age_group_cnt
-	from @NHISNSC_rawdata.@NHIS_JK
+	from cohort_cdm.NHID_JK
 	where person_id in (
 		select distinct person_id
 		from (
 			select distinct person_id
 			from (
 				select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year -- min(), max()의 year를 stnd_y로 대체
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				group by person_id, age_group
 			) a
 			group by person_id
@@ -291,7 +291,7 @@ from (
 		) b
 		where b.person_id not in (
 			select person_id 
-			from @NHISNSC_rawdata.@NHIS_JK
+			from cohort_cdm.NHID_JK
 			where person_id =b.person_id
 			group by person_id, age_group
 			having count(age_group) = 5
@@ -304,7 +304,7 @@ from (
 ) y
 where y.person_id not in (
 select distinct person_id
-from @NHISNSC_rawdata.@NHIS_JK
+from cohort_cdm.NHID_JK
 where person_id=y.person_id
 and age_group=0)) n
 where m.person_id=n.person_id
@@ -317,9 +317,9 @@ and x.max_stnd_y + 1=y.min_stnd_y
 
 group by x.person_id) d2, 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from @NHISNSC_rawdata.@NHIS_JK q, (
+	from cohort_cdm.NHID_JK q, (
 		select person_id, max(stnd_y) as stnd_y
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) d3
@@ -333,7 +333,7 @@ and d1.person_id=d3.person_id
 	: Assume that the interval is started at the start year of the new interval
 */
 -- continuous intercal data
-INSERT INTO @NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -358,10 +358,10 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK d1,
+from cohort_cdm.NHID_JK d1,
 	(
 	select s1.person_id, s1.age_group, min(s1.stnd_y) as stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK s1,
+	from cohort_cdm.NHID_JK s1,
 	(
 	select distinct person_id, max_age_group, min_age_group
 	from (
@@ -370,14 +370,14 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 		select person_id, max(age_group) as max_age_group, min(age_group) as min_age_group
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year -- min(), max()의 year를 stnd_y로 대체
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
@@ -385,7 +385,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 			) b
 			where b.person_id not in (
 				select person_id 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
@@ -398,7 +398,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 	) y
 	where y.person_id not in (
 	select distinct person_id
-	from @NHISNSC_rawdata.@NHIS_JK
+	from cohort_cdm.NHID_JK
 	where person_id=y.person_id
 	and age_group=0)) x
 	where person_id not in (
@@ -408,20 +408,20 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 
 	(
 	select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK m, 
+	from cohort_cdm.NHID_JK m, 
 	(select distinct person_id, min_age_group
 	from (
 		select person_id, min(age_group) as min_age_group
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	-- min(), max()의 year를 stnd_y로 대체
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
@@ -429,7 +429,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 			) b
 			where b.person_id not in (
 				select person_id 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
@@ -442,7 +442,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 	) y
 	where y.person_id not in (
 	select distinct person_id
-	from @NHISNSC_rawdata.@NHIS_JK
+	from cohort_cdm.NHID_JK
 	where person_id=y.person_id
 	and age_group=0)) n
 	where m.person_id=n.person_id
@@ -451,20 +451,20 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 
 	(
 	select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK m, 
+	from cohort_cdm.NHID_JK m, 
 	(select distinct person_id, min_age_group
 	from (
 		select person_id, min(age_group) as min_age_group
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	-- min(), max()의 year를 stnd_y로 대체
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
@@ -472,7 +472,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 			) b
 			where b.person_id not in (
 				select person_id 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
@@ -485,7 +485,7 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 	) y
 	where y.person_id not in (
 	select distinct person_id
-	from @NHISNSC_rawdata.@NHIS_JK
+	from cohort_cdm.NHID_JK
 	where person_id=y.person_id
 	and age_group=0)) n
 	where m.person_id=n.person_id
@@ -503,9 +503,9 @@ from @NHISNSC_rawdata.@NHIS_JK d1,
 	) d2, 
 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from @NHISNSC_rawdata.@NHIS_JK q, (
+	from cohort_cdm.NHID_JK q, (
 		select person_id, max(stnd_y) as stnd_y
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) d3 
@@ -521,7 +521,7 @@ and d1.person_id=d3.person_id
 		: There are 236 of max data which are not in the eldery interval
 		: Identicaly, assume the birth year as min(stnd_y) of Maximun interval
 */
-INSERT INTO	@NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -546,13 +546,13 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK m, 
+from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(stnd_y) as stnd_y
-	from @NHISNSC_rawdata.@NHIS_JK x, (
+	from cohort_cdm.NHID_JK x, (
 		select distinct person_id, age_group
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
