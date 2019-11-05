@@ -24,8 +24,8 @@
  2. Create table
 ***************************************/  
 /*
-CREATE TABLE @NHISNSC_database.DRUG_EXPOSURE ( 
-     drug_exposure_id				BIGINT	 	NOT NULL , 
+CREATE TABLE cohort_cdm.DRUG_EXPOSURE ( 
+     drug_exposure_id				NUMBER	 	NOT NULL , 
      person_id						INTEGER			NOT NULL , 
      drug_concept_id				INTEGER			NULL , 
      drug_exposure_start_date		DATE			NOT NULL , 
@@ -41,7 +41,7 @@ CREATE TABLE @NHISNSC_database.DRUG_EXPOSURE (
 	 dose_unit_concept_id			INTEGER			NULL ,
 	 lot_number						VARCHAR(50)		NULL ,
      provider_id					INTEGER			NULL , 
-     visit_occurrence_id			BIGINT			NULL , 
+     visit_occurrence_id			NUMBER			NULL , 
      drug_source_value				VARCHAR(50)		NULL ,
 	 drug_source_concept_id			INTEGER			NULL ,
 	 route_source_value				VARCHAR(50)		NULL ,
@@ -52,19 +52,19 @@ CREATE TABLE @NHISNSC_database.DRUG_EXPOSURE (
 /**************************************
  2-1. Create temp mapping table
 ***************************************/ 
-IF OBJECT_ID('tempdb..#mapping_table', 'U') IS NOT NULL
+IF OBJECT_ID('tempdb..mapping_table', 'U') IS NOT NULL
 	DROP TABLE #mapping_table;
 
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
-into #mapping_table
-from @Mapping_database.source_to_concept_map a join @Mapping_database.CONCEPT b on a.target_concept_id=b.concept_id
+into mapping_table
+from cohort_cdm.source_to_concept_map a join cohort_cdm.CONCEPT b on a.target_concept_id=b.concept_id
 where a.invalid_reason is null and b.invalid_reason is null and a.domain_id='drug';
 
 
 /**************************************
  3-1. Insert data using 30T
 ***************************************/  
-Insert into @NHISNSC_database.DRUG_EXPOSURE 
+Insert into cohort_cdm.DRUG_EXPOSURE 
 (drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_date, drug_exposure_end_date, 
 drug_type_concept_id, stop_reason, refills, quantity, days_supply, 
 sig, route_concept_id, lot_number,
