@@ -13,7 +13,7 @@
  1. Create dose_era table
 ***************************************/ 
 /*
- CREATE TABLE @NHISNSC_database.DOSE_ERA (
+ CREATE TABLE cohort_cdm.DOSE_ERA (
      dose_era_id					INTEGER	 identity(1,1)    NOT NULL , 
      person_id						INTEGER     NOT NULL ,
      drug_concept_id				INTEGER   NOT NULL ,
@@ -45,7 +45,7 @@ SELECT
 	, d.days_supply AS days_supply
 	, COALESCE(d.drug_exposure_end_date, DATEADD(DAY, d.days_supply, d.drug_exposure_start_date), DATEADD(DAY, 1, drug_exposure_start_date)) AS drug_exposure_end_date
 INTO #cteDrugTarget 
-FROM @NHISNSC_database.DRUG_EXPOSURE d
+FROM cohort_cdm.DRUG_EXPOSURE d
 	 JOIN @Mapping_database.CONCEPT_ANCESTOR ca ON ca.descendant_concept_id = d.drug_concept_id
 	 JOIN @Mapping_database.CONCEPT c ON ca.ancestor_concept_id = c.concept_id
 	 WHERE c.vocabulary_id in ('RxNorm', 'RxNorm Extension') 
@@ -79,7 +79,7 @@ INTO #cteEndDates FROM
 			, dose_value
 			, drug_exposure_start_date AS event_date
 			, -1 AS event_type, ROW_NUMBER() OVER(PARTITION BY person_id, ingredient_concept_id, unit_concept_id, dose_value ORDER BY drug_exposure_start_date) AS start_ordinal
-		FROM #cteDrugTarget 
+		FROM cteDrugTarget 
 
 		UNION ALL
 
@@ -91,7 +91,7 @@ INTO #cteEndDates FROM
 			, DATEADD(DAY, 30, drug_exposure_end_date) AS drug_exposure_end_date
 			, 1 AS event_type
 			, NULL
-		FROM #cteDrugTarget
+		FROM cteDrugTarget
 	) RAWDATA
 ) e
 WHERE (2 * e.start_ordinal) - e.overall_ord = 0;
@@ -104,8 +104,8 @@ SELECT
 	, dt.dose_value
 	, dt.drug_exposure_start_date
 	, MIN(e.end_date) AS dose_era_end_date
-into #cteDoseEraEnds FROM #cteDrugTarget dt
-JOIN #cteEndDates e
+into cteDoseEraEnds FROM #cteDrugTarget dt
+JOIN cteEndDates e
 ON dt.person_id = e.person_id AND dt.ingredient_concept_id = e.ingredient_concept_id AND e.end_date >= dt.drug_exposure_start_date
 --AND dt.unit_concept_id = e.unit_concept_id AND dt.dose_value = e.dose_value		--Both unit_concpet_id and dose_value are excluded in both tables because of NULLs
 GROUP BY
@@ -120,15 +120,15 @@ GROUP BY
 /**************************************
  3. Step 2: Insert data into dose_era table
 ***************************************/ 
-INSERT INTO @NHISNSC_database.dose_era (person_id, drug_concept_id, dose_value, dose_era_start_date, dose_era_end_date)
+INSERT INTO cohort_cdm.dose_era (person_id, drug_concept_id, dose_value, dose_era_start_date, dose_era_end_date)
 SELECT
 	person_id
 	, drug_concept_id
 	, dose_value
 	, MIN(drug_exposure_start_date) AS dose_era_start_date
 	, dose_era_end_date
-	from #cteDoseEraEnds
+	from cteDoseEraEnds
 GROUP BY person_id, drug_concept_id, unit_concept_id, dose_value, dose_era_end_date
 ORDER BY person_id, drug_concept_id;
 
-drop table #cteDrugTarget, #cteEndDates, #cteDoseEraEnds;
+drop table cteDrugTarget, cteEndDates, cteDoseEraEnds;
