@@ -35,7 +35,7 @@ CREATE TABLE cohort_cdm.DRUG_EXPOSURE (
      refills						INTEGER			NULL , 
      quantity						FLOAT			NULL , 
      days_supply					INTEGER			NULL , 
-     sig							VARCHAR(MAX)	NULL , 
+     sig							CLOB	NULL , 
 	 route_concept_id				INTEGER			NULL ,
 	 effective_drug_dose			FLOAT			NULL ,
 	 dose_unit_concept_id			INTEGER			NULL ,
@@ -70,10 +70,10 @@ drug_type_concept_id, stop_reason, refills, quantity, days_supply,
 sig, route_concept_id, lot_number,
 provider_id, visit_occurrence_id, drug_source_value, drug_source_concept_id, route_source_value, 
 dose_unit_source_value)
-SELECT convert(bigint, convert(bigint, a.master_seq) *10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as drug_exposure_id,
+SELECT to_number(a.master_seq) *10 || convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as drug_exposure_id,
 	a.person_id as person_id,
 	b.target_concept_id as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
+	to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_start_date,
 	--DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_mqty_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (Modified: 2017.02.17 by SW Lee)
 	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
 	case when a.FORM_CD in ('02', '2', '04', '06', '10', '12') then 38000180 
@@ -107,9 +107,9 @@ FROM
 			case when x.clause_cd is not null and len(x.clause_cd) = 1 and isnumeric(x.clause_cd)=1 and convert(int, x.clause_cd) between 1 and 9 then '0' + x.clause_cd else x.clause_cd end as clause_cd,
 			case when x.item_cd is not null and len(x.item_cd) = 1 and isnumeric(x.item_cd)=1 and convert(int, x.item_cd) between 1 and 9 then '0' + x.item_cd else x.item_cd end as item_cd,
 			y.master_seq, y.person_id, z.form_cd			
-	FROM @NHISNSC_rawdata.@NHIS_30T x, 
-	     (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='130') y
-		, (select form_cd, KEY_SEQ, PERSON_ID from @NHISNSC_rawdata.@NHIS_20T) z
+	FROM cohort_cdm.NHID_30T x, 
+	     (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='130') y
+		, (select form_cd, KEY_SEQ, PERSON_ID from cohort_cdm.NHID_20T) z
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
@@ -121,18 +121,18 @@ where a.div_cd=b.source_code
 /**************************************
  3-2. Insert data using 60T
 ***************************************/
-insert into @NHISNSC_database.DRUG_EXPOSURE 
+insert into cohort_cdm.DRUG_EXPOSURE 
 (drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_date, drug_exposure_end_date, 
 drug_type_concept_id, stop_reason, refills, quantity, days_supply, 
 sig, route_concept_id, lot_number,
 provider_id, visit_occurrence_id, drug_source_value, drug_source_concept_id, route_source_value, 
 dose_unit_source_value)
-SELECT convert(bigint, convert(bigint, a.master_seq) *10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as drug_exposure_id,
+SELECT to_number(a.master_seq) *10 || convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as drug_exposure_id,
 	a.person_id as person_id,
 	b.target_concept_id as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
+	to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_start_date,
 	-- DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (Modified: 2017.02.17 by SW Lee)
-	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, to_date(a.recu_fr_dt, 'yyyymmdd')) as drug_exposure_end_date,
 	case when a.FORM_CD in ('02', '2', '04', '06', '10', '12') then 38000180 
 		when a.FORM_CD not in ('02', '2', '04', '06', '10', '12') then 581452 
 		end as drug_type_concept_id, 
@@ -155,9 +155,9 @@ FROM
 			case when x.dd_mqty_freq is not null and isnumeric(x.dd_mqty_freq)=1 and cast(x.dd_mqty_freq as float) > '0' then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and isnumeric(x.dd_exec_freq)=1 and cast(x.dd_exec_freq as float) > '0' then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			y.master_seq, y.person_id, z.form_cd			
-	FROM @NHISNSC_rawdata.@NHIS_60T x, 
+	FROM cohort_cdm.NHID_60T x, 
 	     (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='160') y
-	, (select form_cd, KEY_SEQ, PERSON_ID from @NHISNSC_rawdata.@NHIS_20T) z
+	, (select form_cd, KEY_SEQ, PERSON_ID from cohort_cdm.NHID_20T) z
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
@@ -169,7 +169,7 @@ where a.div_cd=b.source_code
 /**************************************
  3-3. Insert data using 30T which are unmapped with temp mapping table
 ***************************************/  
-insert into @NHISNSC_database.DRUG_EXPOSURE 
+insert into cohort_cdm.DRUG_EXPOSURE 
 (drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_date, drug_exposure_end_date, 
 drug_type_concept_id, stop_reason, refills, quantity, days_supply, 
 sig, route_concept_id, lot_number,
@@ -179,7 +179,7 @@ SELECT
 	 convert(bigint, convert(bigint, a.master_seq)*10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as drug_exposure_id,
 	a.person_id as person_id,
 	0 as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
+	to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_start_date,
 	--DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_mqty_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (Modified: 2017.02.17 by SW Lee)
 	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
 	case when a.FORM_CD in ('02', '2', '04', '06', '10', '12') then 38000180 
@@ -213,9 +213,9 @@ FROM
 			case when x.clause_cd is not null and len(x.clause_cd) = 1 and isnumeric(x.clause_cd)=1 and convert(int, x.clause_cd) between 1 and 9 then '0' + x.clause_cd else x.clause_cd end as clause_cd,
 			case when x.item_cd is not null and len(x.item_cd) = 1 and isnumeric(x.item_cd)=1 and convert(int, x.item_cd) between 1 and 9 then '0' + x.item_cd else x.item_cd end as item_cd,
 			y.master_seq, y.person_id, z.form_cd			
-	FROM (select * from @NHISNSC_rawdata.@NHIS_30T where div_type_cd in ('3', '4', '5')) x, 
-	     (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='130') y
-		, (select form_cd, KEY_SEQ, PERSON_ID from @NHISNSC_rawdata.@NHIS_20T) z
+	FROM (select * from cohort_cdm.NHID_30T where div_type_cd in ('3', '4', '5')) x, 
+	     (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='130') y
+		, (select form_cd, KEY_SEQ, PERSON_ID from cohort_cdm.NHID_20T) z
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
@@ -232,12 +232,12 @@ drug_type_concept_id, stop_reason, refills, quantity, days_supply,
 sig, route_concept_id, lot_number,
 provider_id, visit_occurrence_id, drug_source_value, drug_source_concept_id, route_source_value, 
 dose_unit_source_value)
-SELECT convert(bigint, convert(bigint, a.master_seq)*10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as drug_exposure_id,
+SELECT to_number(a.master_seq)*10 || convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as drug_exposure_id,
 	a.person_id as person_id,
 	0 as drug_concept_id,
-	CONVERT(date, a.recu_fr_dt, 112) as drug_exposure_start_date,
+	to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_start_date,
 	-- DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (Modified: 2017.02.17 by SW Lee)
-	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_end_date,
 	case when a.FORM_CD in ('02', '2', '04', '06', '10', '12') then 38000180 
 		when a.FORM_CD not in ('02', '2', '04', '06', '10', '12') then 581452 
 		end as drug_type_concept_id, 
@@ -260,23 +260,23 @@ FROM
 			case when x.dd_mqty_freq is not null and isnumeric(x.dd_mqty_freq)=1 and cast(x.dd_mqty_freq as float) > '0' then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and isnumeric(x.dd_exec_freq)=1 and cast(x.dd_exec_freq as float) > '0' then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			y.master_seq, y.person_id, z.form_cd			
-	FROM (select * from @NHISNSC_rawdata.@NHIS_60T where div_type_cd in ('3', '4', '5')) x, 
-	     (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='160') y
-	, (select form_cd, KEY_SEQ, PERSON_ID from @NHISNSC_rawdata.@NHIS_20T) z
+	FROM (select * from cohort_cdm.NHID_60T where div_type_cd in ('3', '4', '5')) x, 
+	     (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='160') y
+	, (select form_cd, KEY_SEQ, PERSON_ID from cohort_cdm.NHID_20T) z
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
-	and y.person_id=z.PERSON_ID	) a
-where a.div_cd not in (select source_code from #mapping_table )
+	and y.person_id=z.PERSON_ID) a
+where a.div_cd not in (select source_code from mapping_table )
 ;
 
-drop table #mapping_table;
+drop table mapping_table;
 
 /**************************************
  5. Delete data of which drug_start_data are recorded before death date
 ***************************************/
 delete from a 
-from @NHISNSC_database.DRUG_EXPOSURE a, @NHISNSC_database.death b
+from cohort_cdm.DRUG_EXPOSURE a, cohort_cdm.death b
 where a.person_id=b.person_id
 and b.death_date < a.drug_exposure_start_date
 ;
@@ -287,7 +287,7 @@ and b.death_date < a.drug_exposure_start_date
 ***************************************/
 update a
 set drug_exposure_end_date=b.death_date
-from @NHISNSC_database.DRUG_EXPOSURE a, @NHISNSC_database.DEATH b
+from cohort_cdm.DRUG_EXPOSURE a, cohort_cdm.DEATH b
 where a.person_id=b.person_id
 and (b.death_date < a.drug_exposure_start_date
 or b.death_date < a.drug_exposure_end_date)
