@@ -67,8 +67,8 @@ on commit preserve rows;
 /*    
 -- Creating Vertical tables
 select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 
-into @NHISNSC_rawdata.GJ_VERTICAL
-from @NHISNSC_rawdata.@NHIS_GJ
+into cohort_cdm.GJ_VERTICAL
+from cohort_cdmNHIS_GJ
 unpivot (meas_value for meas_type in ( -- 47 GJ items
     height, weight, waist, bp_high, bp_lwst,
     blds, tot_chole, triglyceride, hdl_chole, ldl_chole,
@@ -83,7 +83,7 @@ unpivot (meas_value for meas_type in ( -- 47 GJ items
 )) as unpivortn
 ;
 select STND_Y as hchk_year, person_id, jk_type, jk_value into @NHISNSC_rawdata.JK_VERTICAL
-from @NHISNSC_rawdata.@NHIS_JK
+from cohort_cdm.NHID_JK
 unpivot (jk_value for jk_type in ( -- 2 JK items
         CTRB_PT_TYPE_CD, DFAB_GRD_CD
 )) as unpivortn
@@ -91,7 +91,7 @@ unpivot (jk_value for jk_type in ( -- 2 JK items
 */
 
 -- observation mapping table(temp)
-CREATE TABLE #observation_mapping
+CREATE TABLE observation_mapping
     (
      meas_type						varchar(50)					NULL , 
      id_value						varchar(50)					NULL ,
@@ -229,14 +229,14 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, 
 				--Family history (Starting with FMLY_) existence, recored as 1 or 2 until 2008 and 0 or 1 until 2009
 				case	when substring(meas_type, 1, 30) in('FMLY_LIVER_DISE_PATIEN_YN', 'FMLY_HPRTS_PATIEN_YN', 'FMLY_APOP_PATIEN_YN', 'FMLY_HDISE_PATIEN_YN', 'FMLY_DIABML_PATIEN_YN', 'FMLY_CANCER_PATIEN_YN') 
-							and substring(hchk_year, 1, 4) in ('2002', '2003', '2004', '2005', '2006', '2007', '2008') then cast(cast(meas_value as int)-1 as varchar(50))
+							and substring(hchk_year, 1, 4) in ('2002', '2003', '2004', '2005', '2006', '2007', '2008') then to_date(meas_value as int)-1 as varchar(50))
 				else meas_value
 				end as meas_value 			
-			from @NHISNSC_rawdata.GJ_VERTICAL) a
-		JOIN #observation_mapping b 
+			from cohort_cdm.GJ_VERTICAL a
+		JOIN observation_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
-		JOIN @NHISNSC_database.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('HCHK_PMH_CD1', 'HCHK_PMH_CD2', 'HCHK_PMH_CD3','HCHK_APOP_PMH_YN', 'HCHK_HDISE_PMH_YN', 'HCHK_HPRTS_PMH_YN', 
@@ -252,13 +252,13 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 /**************************************
  2. Insert continuous data
 ***************************************/ 
-INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-	select	cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
+	select	to_date(c.master_seq, b.id_value) as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as observation_date,
+			to_date(a.hchk_year||'0101', 'yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null and b.value_as_number is not null
@@ -277,11 +277,11 @@ INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observatio
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @NHISNSC_rawdata.GJ_VERTICAL) a
-		JOIN #observation_mapping b 
+			from to_date.GJ_VERTICAL) a
+		JOIN observation_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN @NHISNSC_database.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('CUR_SMK_TERM_RSPS_CD', 'CUR_DSQTY_RSPS_CD', 'PAST_SMK_TERM_RSPS_CD', 'PAST_DSQTY_RSPS_CD', 
@@ -310,26 +310,25 @@ CREATE TABLE #observation_mapping09
 	)
 ;
 
-
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	1,		40771103,		44818704,	45881908,		NULL,		0);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	2,		40771103,		44818704,	45881908,		NULL,		1);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	3,		40771103,		44818704,	45881908,		NULL,		2);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	4,		40771103,		44818704,	45881908,		NULL,		3);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	5,		40771103,		44818704,	45881908,		NULL,		4);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	6,		40771103,		44818704,	45881908,		NULL,		5);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	7,		40771103,		44818704,	45881908,		NULL,		6);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	8,		40771103,		44818704,	45881908,		NULL,		7);
-insert into #observation_mapping09 (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	0,		3037705,		44818704,	4045131,		NULL,		NULL) ;
-
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	1,		40771103,		44818704,	45881908,		NULL,		0);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	2,		40771103,		44818704,	45881908,		NULL,		1);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	3,		40771103,		44818704,	45881908,		NULL,		2);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	4,		40771103,		44818704,	45881908,		NULL,		3);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	5,		40771103,		44818704,	45881908,		NULL,		4);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	6,		40771103,		44818704,	45881908,		NULL,		5);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	7,		40771103,		44818704,	45881908,		NULL,		6);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('DRNK_HABIT_RSPS_CD',	'43',	8,		40771103,		44818704,	45881908,		NULL,		7);
+INTO observation_mapping values (meas_type, id_value, answer, observation_concept_id, observation_type_concept_id, observation_unit_concept_id, value_as_concept_id, value_as_number) values ('TM1_DRKQTY_RSPS_CD',	'44',	0,		3037705,		44818704,	4045131,		NULL,		NULL) ;
 
 
-INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-select		cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
+select		to_date(c.master_seq, b.id_value) as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as observation_date,
+			to_date(a.hchk_year||'0101','yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null and b.value_as_number is not null
@@ -348,11 +347,11 @@ select		cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @NHISNSC_rawdata.GJ_VERTICAL) a
-		JOIN #observation_mapping09 b 
+			from cohort_cdm.GJ_VERTICAL) a
+		JOIN observation_mapping09 b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') >= isnull(cast(b.answer as char),'0')
-		JOIN @NHISNSC_database.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('TM1_DRKQTY_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
@@ -362,13 +361,13 @@ select		cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
 /**************************************
  2. Insert categorical drinking data changing from 2009
 ***************************************/ 
-INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
-	select	cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
+	select	to_date(c.master_seq, b.id_value) as observation_id,
 			a.person_id as person_id,
 			b.observation_concept_id as observation_concept_id,
-			cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as observation_date,
+			to_date(a.hchk_year||'0101','yyyymmdd') as observation_date,
 			oservation_time = null,
 			b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null and b.value_as_number is not null
@@ -387,11 +386,11 @@ INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observatio
 			qualifier_source_Value = null
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value
-			from @NHISNSC_rawdata.GJ_VERTICAL) a
-		JOIN #observation_mapping09 b 
+			from cohort_cdm.GJ_VERTICAL) a
+		JOIN observation_mapping09 b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
-		JOIN @NHISNSC_database.SEQ_MASTER c
+		JOIN cohort_cdm.SEQ_MASTER c
 		on a.person_id = cast(c.person_id as char)
 			and a.hchk_year = c.hchk_year
 	where (a.meas_value != '' and substring(a.meas_type, 1, 30) in ('DRNK_HABIT_RSPS_CD') and substring(a.hchk_year, 1, 4) in ('2009', '2010', '2011', '2012', '2013'))
@@ -411,14 +410,14 @@ unpivot (jk_value for jk_type in ( -- 2 JK variable
 /**************************************
  2. Insert data of income quantiles
 ***************************************/ 
-INSERT INTO @NHISNSC_database.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
+INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_As_string, value_as_concept_id,
 										qualifier_concept_id, unit_concept_id, provider_id, visit_occurrence_id, observation_source_value, observation_source_concept_id, unit_source_value, qualifier_source_value)
 
 
-select			cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,		
+select			to_date(c.master_seq, b.id_value) as observation_id,		
 				a.person_id as person_id,
 				b.observation_concept_id as observation_concept_id,
-				cast(CONVERT(VARCHAR, a.hchk_year+'0101', 23)as date) as observation_date,
+				to_date(a.hchk_year||'0101', 'yyyymmdd') as observation_date,
 				observation_datetime = null,
 				b.observation_type_concept_id as observation_type_concept_id,
 				CASE WHEN b.answer is not null and b.value_as_number is not null then b.value_as_number
@@ -434,10 +433,10 @@ select			cast(concat(c.master_seq, b.id_value) as bigint) as observation_id,
 				observation_source_concept_id = null,
 				unit_source_value = null,
 				qualifier_source_Value = null
-	from (select * from @NHISNSC_rawdata.JK_VERTICAL where jk_type='CTRB_PT_TYPE_CD') a
-				JOIN #observation_mapping b 
+	from (select * from cohort_cdm.JK_VERTICAL where jk_type='CTRB_PT_TYPE_CD') a
+				JOIN observation_mapping b 
 				on isnull(a.jk_value,'') = isnull(b.answer,'') 
-				JOIN @NHISNSC_database.SEQ_MASTER c
+				JOIN cohort_cdm.SEQ_MASTER c
 				on a.person_id = cast(c.person_id as char)
 				and a.hchk_year = c.stnd_y
 	where a.jk_value != '' and b.meas_type = 'CTRB_PT_TYPE_CD' 
