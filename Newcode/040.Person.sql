@@ -575,7 +575,7 @@ from cohort_cdm.NHID_JK m,
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
@@ -583,7 +583,7 @@ from cohort_cdm.NHID_JK m,
 			) b
 			where b.person_id not in (
 				select person_id 
-				from @NHISNSC_rawdata.@NHIS_JK
+				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
@@ -599,9 +599,9 @@ from cohort_cdm.NHID_JK m,
 	group by x.person_id, x.age_group
 	) n, 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from @NHISNSC_rawdata.@NHIS_JK q, (
+	from cohort_cdm.NHID_JK q, (
 		select person_id, max(stnd_y) as stnd_y
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) o 
@@ -862,14 +862,14 @@ from cohort_cdm.NHID_JK m,
 		(select distinct person_id
 		from (
 		select person_id, age_group, count(age_group) as age_group_cnt
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		where person_id in (
 			select distinct person_id
 			from (
 				select distinct person_id
 				from (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	
-					from @NHISNSC_rawdata.@NHIS_JK
+					from cohort_cdm.NHID_JK
 					group by person_id, age_group
 				) a
 				group by person_id
