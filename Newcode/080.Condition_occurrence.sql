@@ -74,7 +74,7 @@ select
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.target_concept_id as condition_concept_id,
-	convert(date, m.recu_fr_dt, 112) as condition_start_date,
+	to_date(m.recu_fr_dt, 'yyyymmdd') as condition_start_date,
 	m.visit_end_date as condition_end_date,
 	m.sick_order as condition_type_concept_id,
 	null as stop_reason,
@@ -87,9 +87,9 @@ from (
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
 		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and to_date(b.recu_fr_dt , 'yyyymmdd') + b.vscn -1
 			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then to_date(b.recu_fr_dt , 'yyyymmdd') + b.vscn -1 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then DATEADD(DAY, b.vscn-1, convert(b.recu_fr_dt, 'yyyymmdd') + b.vscn -1 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt, 112)) 
-			else convert(date, b.recu_fr_dt, 112)
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn -1 
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn -1 
+			else to_date(b.recu_fr_dt, 'yyyymmdd')
 		end as visit_end_date,
 		c.sick_sym,
 		case when c.SEQ_NO=1 then '44786627'--primary condition
@@ -99,24 +99,24 @@ from (
 			else '45756847'					-- 5th condition and etc
 		end as sick_order,
 		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
-	from (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='140') a, 
-		@NHISNSC_rawdata.@NHIS_20T b, 
-		@NHISNSC_rawdata.@NHIS_40T c,
-		@NHISNSC_database.observation_period d --added
+	from (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='140') a, 
+		cohort_cdm.NHID_20T b, 
+		cohort_cdm.NHID_40T c,
+		cohort_cdm.observation_period d --added
 	where a.person_id=b.person_id
 	and a.key_seq=b.key_seq
 	and a.key_seq=c.key_seq
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --added
-	and convert(date, c.recu_fr_dt, 112) between d.observation_period_start_date and d.observation_period_end_date) as m, --added
-	#mapping_table as n
+	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date) as m, --added
+	mapping_table as n
 where m.sick_sym=n.source_code;
 
 
 /********************************************
 	2-1. Insert data which are unmapped with temp mapping table as concept_id=0
 ********************************************/
-INSERT INTO @NHISNSC_database.CONDITION_OCCURRENCE
+INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
 	(condition_occurrence_id, person_id, condition_concept_id, condition_start_date, condition_end_date,
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
@@ -124,7 +124,7 @@ select
 	convert(bigint, convert(bigint, m.master_seq) * 10 + convert(bigint, ROW_NUMBER() OVER(partition BY key_seq, seq_no order by m.sick_sym desc))) as condition_occurrence_id,
 	m.person_id as person_id,
 	0 as condition_concept_id,
-	convert(date, m.recu_fr_dt, 112) as condition_start_date,
+	to_date(m.recu_fr_dt, 'yyyymmdd') as condition_start_date,
 	m.visit_end_date as condition_end_date,
 	m.sick_order as condition_type_concept_id,
 	null as stop_reason,
