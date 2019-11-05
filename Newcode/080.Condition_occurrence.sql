@@ -3,15 +3,15 @@
  --Author: SW Lee
  --Date: 2018.09.11
  
- @NHIDNSC_rawdata: DB containing NHIS National Sample cohort DB
- @NHIDNSC_database : DB for NHIS-NSC in CDM format
+ @NHISNSC_rawdata: DB containing NHIS National Sample cohort DB
+ @NHISNSC_database : DB for NHIS-NSC in CDM format
  @Mapping_database : DB for mapping table
- @NHID_JK: JK table in NHIS NSC
- @NHID_20T: 20 table in NHIS NSC
- @NHID_30T: 30 table in NHIS NSC
- @NHID_40T: 40 table in NHIS NSC
- @NHID_60T: 60 table in NHIS NSC
- @NHID_GJ: GJ table in NHIS NSC
+ @NHIS_JK: JK table in NHIS NSC
+ @NHIS_20T: 20 table in NHIS NSC
+ @NHIS_30T: 30 table in NHIS NSC
+ @NHIS_40T: 40 table in NHIS NSC
+ @NHIS_60T: 60 table in NHIS NSC
+ @NHIS_GJ: GJ table in NHIS NSC
  @CONDITION_MAPPINGTABLE : mapping table between KCD and SNOMED-CT
  --Description: Create Condition_occurrence table
  --Generating Table: CONDITION_OCCURRENCE
@@ -21,8 +21,8 @@
  1. Create table
 ***************************************/ 
 /*
-CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE ( 
-     condition_occurrence_id		NUMBER			PRIMARY KEY, 
+CREATE TABLE @NHISNSC_database.CONDITION_OCCURRENCE ( 
+     condition_occurrence_id		BIGINT			PRIMARY KEY, 
      person_id						INTEGER			NOT NULL , 
      condition_concept_id			INTEGER			NOT NULL , 
      condition_start_date			DATE			NOT NULL , 
@@ -30,7 +30,7 @@ CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE (
      condition_type_concept_id		INTEGER			NOT NULL , 
      stop_reason					VARCHAR(20), 
      provider_id					INTEGER, 
-     visit_occurrence_id			NUMBER, 
+     visit_occurrence_id			BIGINT, 
      condition_source_value			VARCHAR(50),
 	 condition_source_concept_id	VARCHAR(50)
 );
@@ -39,14 +39,19 @@ CREATE TABLE cohort_cdm.CONDITION_OCCURRENCE (
 /**************************************
  1-1. Create temp mapping table
 ***************************************/
-select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
-into mapping_table
+/*CREATE GLOBAL TEMPORARY TABLE HONG AS
+SELECT * FROM NHID_20t WHERE 1=2;
+INSERT INTO HONG SELECT * FROM NHID_20t WHERE rownum <= 1000;
+select * from hong;*/
+
+CREATE GLOBAL TEMPORARY TABLE mapping_table as 
+select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason 
 from cohort_cdm.source_to_concept_map a join cohort_cdm.CONCEPT b on a.target_concept_id=b.concept_id
-where a.invalid_reason is null and b.invalid_reason is null and a.domain_id='condition'
+where a.invalid_reason is null and b.invalid_reason is null
 ;
 
-select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
-into mapping_table2
+CREATE GLOBAL TEMPORARY TABLE mapping_table2 as 
+select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason 
 from cohort_cdm.source_to_concept_map a join cohort_cdm.CONCEPT b on a.target_concept_id=b.concept_id
 where a.invalid_reason is null and b.invalid_reason is null
 ;
@@ -70,11 +75,12 @@ INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
 select
-	to_number(m.master_seq) * 10 || ROW_NUMBER() OVER(partition BY key_seq, seq_no order by target_concept_id desc))) as condition_occurrence_id,
+-- +는 오라클에서 ||이다.
+	to_number(to_number(m.master_seq) * 10 || to_number(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by target_concept_id desc))) as condition_occurrence_id,
 	--ROW_NUMBER() OVER(partition BY key_seq, seq_no order by concept_id desc) AS rank, m.seq_no,
 	m.person_id as person_id,
 	n.target_concept_id as condition_concept_id,
-	to_date(m.recu_fr_dt, 'yyyymmdd') as condition_start_date,
+	convert(date, m.recu_fr_dt, 112) as condition_start_date,
 	m.visit_end_date as condition_end_date,
 	m.sick_order as condition_type_concept_id,
 	null as stop_reason,
@@ -85,10 +91,10 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and to_date(b.recu_fr_dt , 'yyyymmdd') + b.vscn -1
-			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then to_date(b.recu_fr_dt , 'yyyymmdd') + b.vscn -1 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn -1 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + b.vscn -1 
+		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1) 
+			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1)  
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
 			else to_date(b.recu_fr_dt, 'yyyymmdd')
 		end as visit_end_date,
 		c.sick_sym,
@@ -100,28 +106,29 @@ from (
 		end as sick_order,
 		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
 	from (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='140') a, 
-		cohort_cdm.NHID_20T b, 
-		cohort_cdm.NHID_40T c,
-		cohort_cdm.observation_period d --added
+  -- NHISNSC_database
+		cohort_cdm.NHIS_20T b, -- NHISNSC_rawdata 
+		cohort_cdm.NHIS_40T c, -- NHISNSC_rawdata
+		cohort_cdm.observation_period d --added, NHISNSC_database
 	where a.person_id=b.person_id
 	and a.key_seq=b.key_seq
 	and a.key_seq=c.key_seq
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --added
 	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date) as m, --added
-	mapping_table as n
+	mapping_table as n -- 임시테이블을 이렇게 불러와도 되는지 의문입니다.
 where m.sick_sym=n.source_code;
 
 
 /********************************************
 	2-1. Insert data which are unmapped with temp mapping table as concept_id=0
 ********************************************/
-INSERT INTO cohort_cdm.CONDITION_OCCURRENCE
+INSERT INTO cohort_cdm.CONDITION_OCCURRENCE -- NHISNSC_database
 	(condition_occurrence_id, person_id, condition_concept_id, condition_start_date, condition_end_date,
 	condition_type_concept_id, stop_reason, provider_id, visit_occurrence_id, condition_source_value, 
 	condition_source_concept_id)
 select
-	convert(bigint, convert(bigint, m.master_seq) * 10 + convert(bigint, ROW_NUMBER() OVER(partition BY key_seq, seq_no order by m.sick_sym desc))) as condition_occurrence_id,
+	to_number(to_number(m.master_seq) * 10 || to_number(ROW_NUMBER() OVER(partition BY key_seq, seq_no order by m.sick_sym desc))) as condition_occurrence_id,
 	m.person_id as person_id,
 	0 as condition_concept_id,
 	to_date(m.recu_fr_dt, 'yyyymmdd') as condition_start_date,
@@ -136,11 +143,11 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt , 112)) 
-			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt , 112)) 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt, 112)) 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt, 112)) 
-			else convert(date, b.recu_fr_dt, 112)
+		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1) 
+			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1) 
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
+			else to_date(b.recu_fr_dt, 'yyyymmdd')
 		end as visit_end_date,
 		c.sick_sym,
 		case when c.SEQ_NO=1 then '44786627'--primary condition
@@ -150,17 +157,17 @@ from (
 			else '45756847'					-- 5th condition and etc
 		end as sick_order,
 		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
-	from (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='140') a, 
-		@NHISNSC_rawdata.@NHIS_20T b, 
-		@NHISNSC_rawdata.@NHIS_40T c,
-		@NHISNSC_database.observation_period d --added
+	from (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='140') a, --NHISNSC_database
+		cohort_cdm.NHIS_20T b, --NHISNSC_rawdata
+		cohort_cdm.NHIS_40T c, --NHISNSC_rawdata
+		cohort_cdm.observation_period d --added, NHISNSC_rawdata
 	where a.person_id=b.person_id
 	and a.key_seq=b.key_seq
 	and a.key_seq=c.key_seq
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --added
-	and convert(date, c.recu_fr_dt, 112) between d.observation_period_start_date and d.observation_period_end_date) as m --added
-where m.sick_sym not in (select source_code from #mapping_table2)
+	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date) as m --added
+where m.sick_sym not in (select source_code from mapping_table2) -- 여기서도 마찬가지로 임시테이블을 이렇게 불러와도 되는지 의문입니다.
 ;
 
 
