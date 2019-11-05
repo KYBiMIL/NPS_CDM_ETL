@@ -77,6 +77,7 @@ null as race_source_concept_id,
 null as ethnicity_source_value,
 null as ethnicity_source_concept_id
 from cohort_cdm.NHID_JK m, --출생년도 추정에 사용되는 person 데이터
+--from (select * from cohort_cdm.NHID_JK m where rownum <=1000) m,
 (select x.person_id, min(x.stnd_y) as stnd_y
 from cohort_cdm.NHID_JK x, 
         (
