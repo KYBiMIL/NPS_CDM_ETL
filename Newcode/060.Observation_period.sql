@@ -3,14 +3,14 @@
  --Author: SW Lee, JH Cho
  --Date: 2018.09.10
  
- @NHISNSC_rawdata : DB containing NHIS National Sample cohort DB
- @NHISNSC_database : DB for NHIS-NSC in CDM format
- @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ @NHIDNSC_rawdata : DB containing NHIS National Sample cohort DB
+ @NHIDNSC_database : DB for NHIS-NSC in CDM format
+ @NHID_JK: JK table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  --Description: Create Observation_period table
  --Generating Table: OBSERVATION_PERIOD
 ***************************************/
@@ -24,22 +24,22 @@
 -- step 1
 select
       a.person_id as person_id, 
-      case when a.stnd_y >= b.year_of_birth then convert(date, convert(varchar, a.stnd_y) + '0101', 112) 
-            else convert(date, convert(varchar, b.year_of_birth) + '0101', 112) 
+      case when a.stnd_y >= b.year_of_birth then to_date(a.stnd_y) || '0101', 'yyyymmdd') 
+            else to_date(b.year_of_birth) || '0101', 'yyyymmdd') 
       end as observation_period_start_date, --Start observation
-      case when convert(date, a.stnd_y + '1231', 112) > c.death_date then c.death_date
-            else convert(date, a.stnd_y + '1231', 112)
+      case when to_date(a.stnd_y || '1231', 'yyyymmdd') > c.death_date then c.death_date
+            else to_date(a.stnd_y || '1231', 'yyyymmdd')
       end as observation_period_end_date --End observation
-into #observation_period_temp1
-from @NHISNSC_rawdata.@NHIS_JK a,
-      @NHISNSC_database.person b left join @NHISNSC_database.death c
+into observation_period_temp1
+from cohort_cdm.NHID_JK a,
+      cohort_cdm.person b left join cohort_cdm.death c
       on b.person_id=c.person_id
 where a.person_id=b.person_id
 
 -- step 2
-select *, row_number() over(partition by person_id order by observation_period_start_date, observation_period_end_date) AS id
-into #observation_period_temp2
-from #observation_period_temp1
+select row_number() over(partition by person_id order by observation_period_start_date, observation_period_end_date) AS NUM, *, AS ID
+into observation_period_temp2
+from observation_period_temp1
 where observation_period_start_date < observation_period_end_date --Exclude cases with having insurance after death
 
 
@@ -75,4 +75,4 @@ from #observation_period_temp4
 group by person_id, sumday
 order by person_id, observation_period_start_date
 
-drop table #observation_period_temp1, #observation_period_temp2, #observation_period_temp3, #observation_period_temp4
+drop table observation_period_temp1, observation_period_temp2, observation_period_temp3, observation_period_temp4
