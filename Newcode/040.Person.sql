@@ -1,3 +1,4 @@
+  
 /**************************************
  --encoding : UTF-8
  --Author: SW Lee, JM Park
@@ -53,10 +54,10 @@ CREATE TABLE cohort_cdm.PERSON (
 	1) More than 1 intervals + 5 full interval
 */
 INSERT INTO PERSON
-	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
-	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
-	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
-	race_source_concept_id, ethnicity_source_value, ethnicity_source_concept_id)
+(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
+birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
+care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
+race_source_concept_id, ethnicity_source_value, ethnicity_source_concept_id)
 select 
 	m.person_id as person_id,
 	case when o.sex=1 then 8507
@@ -77,16 +78,21 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from cohort_cdm.NHID_JK m, 
+   from (select * from cohort_cdm.NHID_JK m where rownum <=1000) m,
+   --from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
-	from cohort_cdm.NHID_JK x, (
+	from cohort_cdm.NHID_JK x, 
+(
 	select person_id, max(age_group) as age_group
-	from (
+	from 
+    (
 		select distinct person_id, age_group
 		from cohort_cdm.NHID_JK
-		where person_id in (
+		where person_id in 
+        (
 			select distinct person_id
-			from (
+			from 
+            (
 				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
 				from cohort_cdm.NHID_JK
 				group by person_id, age_group
@@ -97,15 +103,18 @@ from cohort_cdm.NHID_JK m,
 		group by person_id, age_group
 		having count(age_group) = 5
 	) b
-	group by person_id) y
+	group by person_id
+) y
 	where x.person_id=y.person_id
 	and x.age_group=y.age_group
 	group by x.person_id, y.person_id, x.age_group, y.age_group) n, 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from cohort_cdm.NHID_JK q, (
+	from cohort_cdm.NHID_JK q, 
+        (
 		select person_id, max(stnd_y) as stnd_y
 		from cohort_cdm.NHID_JK
-		group by person_id) w
+		group by person_id
+        ) w
 	where q.person_id=w.person_id
 	and q.stnd_y=w.stnd_y) o 
 where m.person_id=n.PERSON_ID
@@ -143,28 +152,35 @@ select
 	null as ethnicity_source_concept_id
 from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
-	from cohort_cdm.NHID_JK x, (
+	from cohort_cdm.NHID_JK x, 
+(
 		select distinct person_id
 		from cohort_cdm.NHID_JK
 		where age_group=0
-		and person_id in (
+		and person_id in 
+(
 		select person_id
-		from (
+		from 
+    (
 		select person_id, age_group, count(age_group) as age_group_cnt
 		from cohort_cdm.NHID_JK
-		where person_id in (
+		where person_id in 
+        (
 			select distinct person_id
-			from (
+			from 
+                (
 				select distinct person_id
-				from (
+				from 
+                    (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year  -- min(), max()의 year를 stnd_y로 변경해줌
 					from cohort_cdm.NHID_JK
 					group by person_id, age_group
-				) a
+                    ) a
 				group by person_id
 				having count(person_id)>1
-			) b
-			where b.person_id not in (
+                ) b
+			where b.person_id not in 
+            (
 				select person_id 
 				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
@@ -173,10 +189,10 @@ from cohort_cdm.NHID_JK m,
 			) 
 		)
 		group by person_id, age_group
-		) x
+    ) x
 		group by x.person_id
 		having max(x.age_group_cnt) < 5
-		) ) y
+) ) y
 	where x.person_id=y.person_id
 	and x.age_group=0
 	group by x.person_id) n,
