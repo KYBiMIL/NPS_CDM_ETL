@@ -598,7 +598,7 @@ and m.person_id=o.person_id
 	5) 1 interval + 5 full interval
 	: There are data which are included in the elderly interval but recorded death date at 5th year. Not possible to calculate accurate birth year
 */
-INSERT INTO @NHISNSC_database.PERSON
+INSERT INTO PERSON
 	(person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth,
 	birth_datetime, race_concept_id, ethnicity_concept_id, location_id, provider_id,
 	care_site_id, person_source_value, gender_source_value, gender_source_concept_id, race_source_value,
@@ -623,14 +623,14 @@ select
 	null as race_source_concept_id,
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
-from @NHISNSC_rawdata.@NHIS_JK m,
+from cohort_cdm.NHID_JK m,
 (select person_id, age_group, min(stnd_y) as stnd_y
-from @NHISNSC_rawdata.@NHIS_JK
+from cohort_cdm.NHID_JK
 where person_id in (
 	select distinct person_id
 	from (
 		select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year		
-		from @NHISNSC_rawdata.@NHIS_JK
+		from cohort_cdm.NHID_JK
 		group by person_id, age_group
 	) a
 	group by person_id
