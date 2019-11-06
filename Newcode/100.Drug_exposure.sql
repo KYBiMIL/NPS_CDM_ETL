@@ -156,7 +156,7 @@ FROM
 			case when x.dd_exec_freq is not null and isnumeric(x.dd_exec_freq)=1 and cast(x.dd_exec_freq as float) > '0' then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			y.master_seq, y.person_id, z.form_cd			
 	FROM cohort_cdm.NHID_60T x, 
-	     (select master_seq, person_id, key_seq, seq_no from @NHISNSC_database.SEQ_MASTER where source_table='160') y
+	     (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='160') y
 	, (select form_cd, KEY_SEQ, PERSON_ID from cohort_cdm.NHID_20T) z
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no
