@@ -220,13 +220,13 @@ FROM
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
 	and y.person_id=z.PERSON_ID	) a
-where a.div_cd not in (select source_code from #mapping_table )
+where a.div_cd not in (select source_code from mapping_table )
 ;
 
 /**************************************
  3-4. Insert data using 60T which are unmapped with temp mapping table
 ***************************************/
-insert into @NHISNSC_database.DRUG_EXPOSURE 
+insert into cohort_cdm.DRUG_EXPOSURE 
 (drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_date, drug_exposure_end_date, 
 drug_type_concept_id, stop_reason, refills, quantity, days_supply, 
 sig, route_concept_id, lot_number,
