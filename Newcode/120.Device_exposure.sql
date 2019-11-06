@@ -31,7 +31,7 @@
  1. Create table
 ***************************************/ 
 /*
-CREATE TABLE @NHISNSC_database.DEVICE_EXPOSURE ( 
+CREATE TABLE cohort_cdm.DEVICE_EXPOSURE ( 
      device_exposure_id				BIGINT	 		PRIMARY KEY , 
      person_id						INTEGER			NOT NULL , 
      divce_concept_id				INTEGER			NOT NULL , 
@@ -50,24 +50,24 @@ CREATE TABLE @NHISNSC_database.DEVICE_EXPOSURE (
 /**************************************
  1-1. Using temp mapping table
 ***************************************/ 
-IF OBJECT_ID('tempdb..#mapping_table', 'U') IS NOT NULL
-	DROP TABLE #mapping_table;
-IF OBJECT_ID('tempdb..#temp', 'U') IS NOT NULL
-	DROP TABLE #temp;
-IF OBJECT_ID('tempdb..#duplicated', 'U') IS NOT NULL
-	DROP TABLE #duplicated;
-IF OBJECT_ID('tempdb..#device', 'U') IS NOT NULL
-	DROP TABLE #device;
-IF OBJECT_ID('tempdb..#five', 'U') IS NOT NULL
-	DROP TABLE #five;
+IF OBJECT_ID('tempdb..mapping_table', 'U') IS NOT NULL
+	DROP TABLE mapping_table;
+IF OBJECT_ID('tempdb..temp', 'U') IS NOT NULL
+	DROP TABLE temp;
+IF OBJECT_ID('tempdb..duplicated', 'U') IS NOT NULL
+	DROP TABLE duplicated;
+IF OBJECT_ID('tempdb..device', 'U') IS NOT NULL
+	DROP TABLE device;
+IF OBJECT_ID('tempdb..five', 'U') IS NOT NULL
+	DROP TABLE five;
 
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
 	into #temp
-from @Mapping_database.source_to_concept_map a join @Mapping_database.CONCEPT b on a.target_concept_id=b.concept_id
+from Mapping_database.source_to_concept_map a join Mapping_database.CONCEPT b on a.target_concept_id=b.concept_id
 where a.invalid_reason is null and b.invalid_reason is null and a.domain_id='device';
 
-select * into #device from @Mapping_database.source_to_concept_map where domain_id='device';
-select * into #five from @Mapping_database.source_to_concept_map where domain_id='procedure';
+select * into device from Mapping_database.source_to_concept_map where domain_id='device';
+select * into five from Mapping_database.source_to_concept_map where domain_id='procedure';
 
 select a.*
 	into #duplicated
@@ -75,22 +75,22 @@ from #device a, #five b
 where a.source_code=b.source_code
 	and a.invalid_reason='' and b.invalid_reason='';
 
-select * into #mapping_table from #temp
+select * into mapping_table from #temp
 where source_code not in (select source_code from #duplicated);
 
-drop table #device, #five, #temp;
+drop table device, five, temp;
 
 /**************************************
  2-1. Insert data using 30T
 ***************************************/  
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
 select  convert(bigint, convert(bigint, a.master_seq) *10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as device_exposure_id,
 		a.person_id as person_id,
 		b.target_concept_id as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
+		to_char(a.recu_fr_dt, 'yyyymmdd') as device_source_start_date,
 		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
@@ -119,7 +119,7 @@ ON a.div_cd=b.source_code
 /**************************************
  2-2. Insert data using 60T
 ***************************************/  
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
@@ -145,7 +145,7 @@ FROM
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and isnumeric(x.dd_exec_freq)=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_60T where div_type_cd not in ('1', '2', '3', '4', '5')) x, @NHISNSC_database.SEQ_MASTER y
+	FROM (select * from cohort_cdm.NHID_60T where div_type_cd not in ('1', '2', '3', '4', '5')) x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='160'
 	AND x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a JOIN #mapping_table b 
@@ -155,15 +155,15 @@ FROM
 /**************************************
  2-1. Insert data using 30T duplicated
 ***************************************/  
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
 select  convert(bigint, convert(bigint, a.master_seq) *10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as device_exposure_id,
 		a.person_id as person_id,
 		b.target_concept_id as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
-		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
+		to_char(a.recu_fr_dt, 'yyyymmdd') as device_source_start_date,
+		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),'yyyymmdd') as device_source_end_date,
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
 		case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not null and cast(a.UN_COST as float) > 0 and cast(a.AMT as float)>=cast(a.UN_COST as float) then cast(a.AMT as float)/cast(a.UN_COST as float)
@@ -181,7 +181,7 @@ FROM
 			case when x.dd_mqty_exec_freq is not null and x.dd_mqty_exec_freq > '0' and isnumeric(x.dd_mqty_exec_freq)=1 then cast(x.dd_mqty_exec_freq as float) else 1 end as dd_mqty_exec_freq,
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_30T where div_type_cd in ('7', '8')) x, @NHISNSC_database.SEQ_MASTER y
+	FROM (select * from cohort_cdm.NHID_30T where div_type_cd in ('7', '8')) x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='130'
 	AND x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a JOIN #duplicated b 
@@ -191,14 +191,14 @@ ON a.div_cd=b.source_code
 /**************************************
  2-2. Insert data using 60T duplicated
 ***************************************/  
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
 select 	convert(bigint, convert(bigint, a.master_seq) *10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by b.target_concept_id))) as device_exposure_id,
 		a.person_id as person_id,
 		b.target_concept_id as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
+		to_char(a.recu_fr_dt, 'yyyymmdd') as device_source_start_date,
 		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
@@ -217,7 +217,7 @@ FROM
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and isnumeric(x.dd_exec_freq)=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_60T where div_type_cd in ('7', '8')) x, @NHISNSC_database.SEQ_MASTER y
+	FROM (select * from cohort_cdm.NHID_60T where div_type_cd in ('7', '8')) x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='160'
 	AND x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a JOIN #duplicated b 
@@ -226,7 +226,7 @@ FROM
 /**************************************
  2-3. Insert data using 30T which are unmapped with temp mapping table
 ***************************************/
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
@@ -234,8 +234,8 @@ select
 		convert(bigint, convert(bigint, a.master_seq)*10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as device_exposure_id,
 		a.person_id as person_id,
 		0 as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
-		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
+		to_char(a.recu_fr_dt, 'yyyymmdd') as device_source_start_date,
+		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),'yyyymmdd') as device_source_end_date,
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
 case	when a.AMT is not null and cast(a.AMT as float) > 0 and a.UN_COST is not null and cast(a.UN_COST as float) > 0 and cast(a.AMT as float)>=cast(a.UN_COST as float) then cast(a.AMT as float)/cast(a.UN_COST as float)
@@ -253,17 +253,17 @@ FROM
 			case when x.dd_mqty_exec_freq is not null and x.dd_mqty_exec_freq > '0' and isnumeric(x.dd_mqty_exec_freq)=1 then cast(x.dd_mqty_exec_freq as float) else 1 end as dd_mqty_exec_freq,
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_30T where div_type_cd in ('7', '8')) x, @NHISNSC_database.SEQ_MASTER y
+	FROM (select * from cohort_cdm.NHID_30T where div_type_cd in ('7', '8')) x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='130'
 	AND x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a  
-where a.div_cd not in (select source_code from #duplicated union all select source_code from #mapping_table);
+where a.div_cd not in (select source_code from duplicated union all select source_code from mapping_table);
 
 
 /**************************************
  2-4. Insert data using 60T which are unmapped with temp mapping table
 ***************************************/  
-insert into @NHISNSC_database.DEVICE_EXPOSURE
+insert into cohort_cdm.DEVICE_EXPOSURE
 (device_exposure_id, person_id, device_concept_id, device_exposure_start_date, 
 device_exposure_end_date, device_type_concept_id, unique_device_id, quantity, 
 provider_id, visit_occurrence_id, device_source_value, device_source_concept_id)
@@ -271,7 +271,7 @@ select
 		convert(bigint, convert(bigint, a.master_seq)*10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as device_exposure_id,
 		a.person_id as person_id,
 		0 as device_concept_id ,
-		CONVERT(VARCHAR, a.recu_fr_dt, 23) as device_source_start_date,
+		to_char(a.recu_fr_dt, 'yyyymmdd') as device_source_start_date,
 		CONVERT(VARCHAR, DATEADD(DAY, a.mdcn_exec_freq-1, a.recu_fr_dt),23) as device_source_end_date,
 		44818705 as device_type_concept_id,
 		null as unique_device_id,
@@ -290,7 +290,7 @@ FROM
 			case when x.dd_mqty_freq is not null and x.dd_mqty_freq > '0' and isnumeric(x.dd_mqty_freq)=1 then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			case when x.dd_exec_freq is not null and x.dd_exec_freq > '0' and isnumeric(x.dd_exec_freq)=1 then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			cast(x.amt as float) as amt , cast(x.un_cost as float) as un_cost, y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_60T where div_type_cd in ('7', '8')) x, @NHISNSC_database.SEQ_MASTER y
+	FROM (select * from cohort_cdm.NHID_60T where div_type_cd in ('7', '8')) x, cohort_cdm.SEQ_MASTER y
 	WHERE y.source_table='160'
 	AND x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a  
