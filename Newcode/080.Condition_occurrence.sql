@@ -39,10 +39,7 @@ CREATE TABLE @NHISNSC_database.CONDITION_OCCURRENCE (
 /**************************************
  1-1. Create temp mapping table
 ***************************************/
-/*CREATE GLOBAL TEMPORARY TABLE HONG AS
-SELECT * FROM NHID_20t WHERE 1=2;
-INSERT INTO HONG SELECT * FROM NHID_20t WHERE rownum <= 1000;
-select * from hong;*/
+
 
 CREATE GLOBAL TEMPORARY TABLE mapping_table as 
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason 
