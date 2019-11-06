@@ -35,8 +35,8 @@ author:  Lee Evans
 *************************/
 USE @Mapping_database
 
-TRUNCATE TABLE DRUG_STRENGTH;
-BULK INSERT DRUG_STRENGTH 
+TRUNCATE TABLE DRUG_STRENGTH;         --truncate table 테이블의 모든 로우를 제거하는 것
+BULK INSERT DRUG_STRENGTH             --대용량 로드를 위한 BULK INSERT 옵션
 FROM '@vocaFolder\DRUG_STRENGTH.csv' 
 WITH (
 FIRSTROW = 2,
