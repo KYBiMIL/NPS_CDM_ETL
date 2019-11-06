@@ -92,16 +92,16 @@ CREATE TABLE cohort_cdm.PROCEDURE_OCCURRENCE (
 /**************************************
  2-1. Using temp mapping table
 ***************************************/ 
-IF OBJECT_ID('tempdb..#mapping_table', 'U') IS NOT NULL
-	DROP TABLE #mapping_table;
-IF OBJECT_ID('tempdb..#temp', 'U') IS NOT NULL
-	DROP TABLE #temp;
-IF OBJECT_ID('tempdb..#duplicated', 'U') IS NOT NULL
-	DROP TABLE #duplicated;
-IF OBJECT_ID('tempdb..#pro', 'U') IS NOT NULL
-	DROP TABLE #pro;
-IF OBJECT_ID('tempdb..#five', 'U') IS NOT NULL
-	DROP TABLE #five;
+IF OBJECT_ID('tempdb..mapping_table', 'U') IS NOT NULL
+	DROP TABLE mapping_table;
+IF OBJECT_ID('tempdb..temp', 'U') IS NOT NULL
+	DROP TABLE temp;
+IF OBJECT_ID('tempdb..duplicated', 'U') IS NOT NULL
+	DROP TABLE duplicated;
+IF OBJECT_ID('tempdb..pro', 'U') IS NOT NULL
+	DROP TABLE pro;
+IF OBJECT_ID('tempdb..five', 'U') IS NOT NULL
+	DROP TABLE five;
 
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
 	into temp
@@ -149,7 +149,7 @@ FROM (SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
 	FROM (select * from cohort_cdm.NHID_30T where div_type_cd not in ('3','4','5', '7','8')) x, 
 		 (select master_seq, key_seq, seq_no, person_id from cohort_cdm.SEQ_MASTER where source_table='130') y
 	WHERE x.key_seq=y.key_seq
-	AND x.seq_no=y.seq_no) a, #mapping_table b
+	AND x.seq_no=y.seq_no) a, mapping_table b
 WHERE left(a.div_cd,5)=b.source_code
 ;
 
@@ -273,10 +273,10 @@ FROM (SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
 			case when x.dd_mqty_freq is not null and isnumeric(x.dd_mqty_freq)=1 and cast(x.dd_mqty_freq as float) > '0' then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			y.master_seq, y.person_id
 	FROM (select * from cohort_cdm.NHID_30T where div_type_cd in ('1', '2')) x, 
-		 (select master_seq, key_seq, seq_no, person_id from @NHISNSC_database.SEQ_MASTER where source_table='130') y
+		 (select master_seq, key_seq, seq_no, person_id from cohort_cdm.SEQ_MASTER where source_table='130') y
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a 
-WHERE left(a.div_cd,5) not in (select source_code from #duplicated union all select source_code from #mapping_table )
+WHERE left(a.div_cd,5) not in (select source_code from #duplicated union all select source_code from mapping_table )
 ;
 
 /**************************************
@@ -310,8 +310,8 @@ FROM (SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
 WHERE left(a.div_cd,5) not in (select source_code from #duplicated union all select source_code from #mapping_table)
 ;
 
-drop table #mapping_table, #duplicated;
+drop table mapping_table, duplicated;
 
 -- Delete duplicated keys
-delete from @NHISNSC_database.procedure_occurrence
-where procedure_occurrence_id in (select drug_exposure_id from @NHISNSC_database.drug_exposure)
+delete from cohort_cdm.procedure_occurrence
+where procedure_occurrence_id in (select drug_exposure_id from cohort_cdm.drug_exposure)
