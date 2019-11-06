@@ -27,7 +27,7 @@
 /*
 CREATE TABLE @NHISNSC_database.COST (
 	cost_id	bigint	primary key,
-	cost_event_id	bigint	not null,
+	cost_event_id	number	not null,
 	cost_domain_id	varchar(20)	not null,
 	cost_type_concept_id	integer	not null,
 	currency_concept_id	integer,
