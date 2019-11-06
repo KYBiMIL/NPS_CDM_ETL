@@ -82,32 +82,33 @@ select
    --from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
 	from cohort_cdm.NHID_JK x, 
-(
+        (
 	select person_id, max(age_group) as age_group
 	from 
-    (
+            (
 		select distinct person_id, age_group
 		from cohort_cdm.NHID_JK
 		where person_id in 
-        (
+                (
 			select distinct person_id
 			from 
-            (
+                    (
 				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
 				from cohort_cdm.NHID_JK
 				group by person_id, age_group
-			) a
+                    ) a
 			group by person_id
 			having count(person_id)>1
-		)
+                )
 		group by person_id, age_group
 		having count(age_group) = 5
-	) b
+            ) b
 	group by person_id
-) y
+        ) y
 	where x.person_id=y.person_id
 	and x.age_group=y.age_group
-	group by x.person_id, y.person_id, x.age_group, y.age_group) n, 
+	group by x.person_id, y.person_id, x.age_group, y.age_group
+    ) n, 
 	(select w.person_id, w.stnd_y, q.sex, q.sgg
 	from cohort_cdm.NHID_JK q, 
         (
@@ -165,29 +166,29 @@ from cohort_cdm.NHID_JK m,
 		select person_id, age_group, count(age_group) as age_group_cnt
 		from cohort_cdm.NHID_JK
 		where person_id in 
-        (
+                    (
 			select distinct person_id
 			from 
-                (
+                        (
 				select distinct person_id
 				from 
-                    (
+                            (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year  -- min(), max()의 year를 stnd_y로 변경해줌
 					from cohort_cdm.NHID_JK
 					group by person_id, age_group
-                    ) a
+                            ) a
 				group by person_id
 				having count(person_id)>1
-                ) b
+                        ) b
 			where b.person_id not in 
-            (
+                    (   
 				select person_id 
 				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
-			) 
-		)
+                    ) 
+                    )
 		group by person_id, age_group
     ) x
 		group by x.person_id
