@@ -41,8 +41,9 @@ Create table CARE_SITE (
 ***************************************/  
 
 IF OBJECT_ID('tempdb..#temp', 'U') IS NOT NULL
-	DROP TABLE #temp;
+	DROP TABLE temp;
 
+create global temporary table temp as
 SELECT a.ykiho_id,
 	null as care_site_name,
 	case when a.ykiho_gubun_cd='10' then 4068130 --(Tertiary care hospital) 
@@ -67,7 +68,6 @@ SELECT a.ykiho_id,
 	a.ykiho_sido as location_id,
 	a.ykiho_id as care_site_source_value,
 	a.ykiho_gubun_cd || '/' || (case when length(to_number(a.org_type)) = 1 then '0' else org_type end)||org_type as place_of_service_source_value
-into #temp
 
 FROM cohort_cdm.NHID_YK a, (select ykiho_id, max(stnd_y) as max_stnd_y
 	from cohort_cdm.NHID_YK c
@@ -77,8 +77,8 @@ and a.stnd_y=b.max_stnd_y
 ;
 
 INSERT INTO cohort_cdm.CARE_SITE
-select * from #temp
+select * from temp
 group by YKIHO_ID, care_site_name, place_of_service_concept_id, location_id, care_site_source_value, place_of_service_source_value
 ;
 
-drop table #temp;
+drop table temp;
