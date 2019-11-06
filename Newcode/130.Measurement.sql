@@ -53,7 +53,7 @@ CREATE TABLE measurement_mapping
      measurement_concept_id			NUMBER						NULL ,
 	 measurement_type_concept_id	NUMBER						NULL ,
 	 measurement_unit_concept_id	NUMBER						NULL ,
-	 value_as_concept_id			bigint						NULL ,
+	 value_as_concept_id			NUMBER						NULL ,
 	 value_as_number				float						NULL 
 	)
 ;
@@ -101,7 +101,7 @@ INTO measurement_mapping VALUES (meas_type, id_value, answer, measurement_concep
 ***************************************/ 
 /*
 select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value into @NHISNSC_database.GJ_VERTICAL
-from @NHISNSC_rawdata.@NHIS_GJ
+from cohort_cdm.NHID_GJ
 unpivot (meas_value for meas_type in ( -- 47 검진 항목
 	height, weight, waist, bp_high, bp_lwst,
 	blds, tot_chole, triglyceride, hdl_chole, ldl_chole,
@@ -165,7 +165,7 @@ INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_conce
 											unit_concept_id, range_low, range_high, provider_id, visit_occurrence_id, measurement_source_value, measurement_source_concept_id, unit_source_value, value_source_value)
 
 
-	select	cast(concat(c.master_seq, b.id_value) as bigint) as measurement_id,
+	select	to_date(c.master_seq, b.id_value) as measurement_id,
 			a.person_id as person_id,
 			b.measurement_concept_id as measurement_concept_id,
 			to_date(a.hchk_year||'0101', 'yyyymmdd') as measurement_date,
@@ -186,7 +186,7 @@ INSERT INTO cohort_cdm.MEASUREMENT (measurement_id, person_id, measurement_conce
 
 	from (select hchk_year, person_id, ykiho_gubun_cd, meas_type, meas_value 			
 			from cohort_cdm.GJ_VERTICAL) a
-		JOIN #measurement_mapping b 
+		JOIN measurement_mapping b 
 		on isnull(a.meas_type,'') = isnull(b.meas_type,'') 
 			and isnull(a.meas_value,'0') = isnull(cast(b.answer as char),'0')
 		JOIN cohort_cdm.SEQ_MASTER c
