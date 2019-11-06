@@ -95,7 +95,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	to_char(a.person_id) + left(convert(varchar, visit_start_date, 'yyyymmdd'), 4)) as payer_plan_period_id,
+	to_char(a.person_id) || left(convert(varchar, visit_start_date, 'yyyymmdd'), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -160,14 +160,14 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	convert(bigint, convert(varchar, b.person_id) || left(convert(varchar, a.drug_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
 	null as revenue_code_source_value,
 	null as drg_source_value
 from (select person_id, drug_exposure_id, drug_exposure_start_date
-	from @NHISNSC_database.DRUG_EXPOSURE
+	from cohort_cdm.DRUG_EXPOSURE
 	where drug_type_concept_id=38000180) a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
 	from cohort_cdm.SEQ_MASTER m, cohort_cdm.NHID_30T n
@@ -248,7 +248,7 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.procedure_date, 112), 4)) as payer_plan_period_id,
+	convert(bigint, convert(varchar, b.person_id) || left(convert(varchar, a.procedure_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
@@ -256,7 +256,7 @@ SELECT
 	null as drg_source_value
 from @NHISNSC_database.PROCEDURE_OCCURRENCE a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from @NHISNSC_database.SEQ_MASTER m, @NHISNSC_rawdata.@NHIS_30T n
+	from cohort_cdm.SEQ_MASTER m, cohort_cdm.NHID_30T n
 	where m.source_table='130'
 	and m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
@@ -265,7 +265,7 @@ and a.person_id=b.person_id;
 
 
 -- Sourec data: 60T
-INSERT INTO @NHISNSC_database.COST
+INSERT INTO cohort_cdm.COST
 	(cost_id, cost_event_id, cost_domain_id, cost_type_concept_id, currency_concept_id,
 	total_charge, total_cost, total_paid, paid_by_payer, paid_by_patient,
 	paid_patient_copay, paid_patient_coinsurance, paid_patient_deductible, paid_by_primary, paid_ingredient_cost,
@@ -288,16 +288,16 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.procedure_date, 112), 4)) as payer_plan_period_id,
+	convert(bigint, convert(varchar, b.person_id) || left(convert(varchar, a.procedure_date, 'yyyymmdd'), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
 	null as revenue_code_source_value,
 	null as drg_source_value
-from @NHISNSC_database.PROCEDURE_OCCURRENCE a, 
+from cohort_cdm.PROCEDURE_OCCURRENCE a, 
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from (select master_seq, key_seq, seq_no, person_id from @NHISNSC_database.SEQ_MASTER where source_table='160') m, 
-	@NHISNSC_rawdata.@NHIS_60T n
+	from (select master_seq, key_seq, seq_no, person_id from cohort_cdm.SEQ_MASTER where source_table='160') m, 
+	cohort_cdm.NHID_60T n
 	where m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
 where left(a.procedure_occurrence_id, 10)=b.master_seq
@@ -308,7 +308,7 @@ and a.person_id=b.person_id;
 -- 4) Device
 ---------------------------------------------------
 -- Sourec data: 30T
-INSERT INTO @NHISNSC_database.COST
+INSERT INTO cohort_cdm.COST
 	(cost_id, cost_event_id, cost_domain_id, cost_type_concept_id, currency_concept_id,
 	total_charge, total_cost, total_paid, paid_by_payer, paid_by_patient,
 	paid_patient_copay, paid_patient_coinsurance, paid_patient_deductible, paid_by_primary, paid_ingredient_cost,
@@ -331,17 +331,17 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	convert(bigint, convert(varchar, b.person_id) || left(convert(varchar, a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
 	null as revenue_code_source_value,
 	null as drg_source_value
 from (select device_exposure_id, person_id, device_exposure_start_date
-	from @NHISNSC_database.DEVICE_EXPOSURE 
-	where device_source_value not in (select source_code from #mapping_table where domain_id='procedure' )) a, --procedure 와 device 에 둘다 변환된 건수들 제외
+	from cohort_cdm.DEVICE_EXPOSURE 
+	where device_source_value not in (select source_code from mapping_table where domain_id='procedure' )) a, --procedure 와 device 에 둘다 변환된 건수들 제외
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from @NHISNSC_database.SEQ_MASTER m, @NHISNSC_rawdata.@NHIS_30T n
+	from cohort_cdm.SEQ_MASTER m, cohort_cdm.NHID_30T n
 	where m.source_table='130'
 	and m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
@@ -350,7 +350,7 @@ and a.person_id=b.person_id;
 
 
 -- Sourec data: 60T
-INSERT INTO @NHISNSC_database.COST
+INSERT INTO cohort_cdm.COST
 	(cost_id, cost_event_id, cost_domain_id, cost_type_concept_id, currency_concept_id,
 	total_charge, total_cost, total_paid, paid_by_payer, paid_by_patient,
 	paid_patient_copay, paid_patient_coinsurance, paid_patient_deductible, paid_by_primary, paid_ingredient_cost,
@@ -373,22 +373,22 @@ SELECT
 	null as paid_by_primary,
 	null as paid_ingredient_cost,
 	null as paid_dispensing_fee,
-	convert(bigint, convert(varchar, b.person_id) + left(convert(varchar, a.device_exposure_start_date, 112), 4)) as payer_plan_period_id,
+	convert(bigint, convert(varchar, b.person_id) || left(convert(varchar, a.device_exposure_start_date, 'yyyymmdd'), 4)) as payer_plan_period_id,
 	null as amount_allowed,
 	null as revenue_code_concept_id,
 	null as drg_concept_id,
 	null as revenue_code_source_value,
 	null as drg_source_value
 from (select device_exposure_id, person_id, device_exposure_start_date
-	from @NHISNSC_database.DEVICE_EXPOSURE 
-	where device_source_value not in (select source_code from #mapping_table where domain_id='procedure' )) a,  --procedure 와 device 에 둘다 변환된 건수들 제외
+	from cohort_cdm.DEVICE_EXPOSURE 
+	where device_source_value not in (select source_code from mapping_table where domain_id='procedure' )) a,  --procedure 와 device 에 둘다 변환된 건수들 제외
 	(select m.master_seq, m.key_seq, m.seq_no, m.person_id, n.amt
-	from (select master_seq, key_seq, seq_no, person_id from @NHISNSC_database.SEQ_MASTER where source_table='160') m, 
-	@NHISNSC_rawdata.@NHIS_60T n
+	from (select master_seq, key_seq, seq_no, person_id from cohort_cdm.SEQ_MASTER where source_table='160') m, 
+	cohort_cdm.NHID_60T n
 	where m.key_seq=n.key_seq
 	and m.seq_no=n.seq_no) b
 where left(a.device_exposure_id, 10)=b.master_seq
 and a.person_id=b.person_id;
 
 
-drop table #mapping_table;
+drop table mapping_table;
