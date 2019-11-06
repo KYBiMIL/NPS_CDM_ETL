@@ -50,7 +50,7 @@ select a.*, SYSDATE - day, a.observation_period_end_date, b.observation_period_s
 		left join
 		observation_period_temp2 b
 		on a.person_id = b.person_id
-			and a.id = to_date(b.id as number) -1
+			and a.id = to_number(b.id) -1
 	order by person_id, id;
 
 -- step 4
