@@ -38,7 +38,7 @@ where a.person_id=b.person_id;
 
 -- step 2
 create global temporary table obseration_period2 as
-select row_number() over(partition by person_id order by observation_period_start_date, observation_period_end_date) AS NUM, *, AS ID
+select row_number() over(partition by person_id order by observation_period_start_date, observation_period_end_date) AS ID
 from observation_period_temp1
 where observation_period_start_date < observation_period_end_date; --Exclude cases with having insurance after death
 
