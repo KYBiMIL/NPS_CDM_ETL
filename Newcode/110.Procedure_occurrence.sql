@@ -256,7 +256,7 @@ INSERT INTO cohort_cdm.PROCEDURE_OCCURRENCE
 	modifier_concept_id, quantity, provider_id, visit_occurrence_id, procedure_source_value, 
 	procedure_source_concept_id)
 SELECT
-	to_number(a.master_seq)*10 + convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as procedure_occurrence_id,
+	to_number(a.master_seq)*10 || convert(bigint, row_number() over (partition by a.key_seq, a.seq_no order by a.div_cd))) as procedure_occurrence_id,
 	a.person_id as person_id,
 	'0' as procedure_concept_id,
 	to_char(a.recu_fr_dt, 'yyyymmdd') as procedure_date,
@@ -303,11 +303,11 @@ FROM (SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
 			case when x.dd_exec_freq is not null and isnumeric(x.dd_exec_freq)=1 and cast(x.dd_exec_freq as float) > '0' then cast(x.dd_exec_freq as float) else 1 end as dd_exec_freq,
 			case when x.dd_mqty_freq is not null and isnumeric(x.dd_mqty_freq)=1 and cast(x.dd_mqty_freq as float) > '0' then cast(x.dd_mqty_freq as float) else 1 end as dd_mqty_freq,
 			y.master_seq, y.person_id
-	FROM (select * from @NHISNSC_rawdata.@NHIS_60T where div_type_cd in ('1', '2')) x, 
-		 (select master_seq, key_seq, seq_no, person_id from @NHISNSC_database.SEQ_MASTER where source_table='160') y
+	FROM (select * from cohort_cdm.NHID_60T where div_type_cd in ('1', '2')) x, 
+		 (select master_seq, key_seq, seq_no, person_id from cohort_cdm.SEQ_MASTER where source_table='160') y
 	WHERE x.key_seq=y.key_seq
 	AND x.seq_no=y.seq_no) a 
-WHERE left(a.div_cd,5) not in (select source_code from #duplicated union all select source_code from #mapping_table)
+WHERE left(a.div_cd,5) not in (select source_code from duplicated union all select source_code from mapping_table)
 ;
 
 drop table mapping_table, duplicated;
