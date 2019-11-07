@@ -1,4 +1,4 @@
-/**************************************
+\/**************************************
  --encoding : UTF-8
  --Author: SW Lee, JM Park
  --Date: 2018.09.01
@@ -240,41 +240,38 @@ select
 from cohort_cdm.NHID_JK d1, 
 (select x.person_id, min(y.min_stnd_y) as stnd_y
 from 
-
 (
 select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
 from cohort_cdm.NHID_JK m, 
 (select distinct person_id, min_age_group
 from (
 	select person_id, min(age_group) as min_age_group
-	from (
+	from        (
 	select person_id, age_group, count(age_group) as age_group_cnt
-	from cohort_cdm.NHID_JK
-	where person_id in (
-		select distinct person_id
-		from (
+	from 
+                    (
+		select distinct person_id, age_group
+		from cohort_cdm.NHID_JK
+		where person_id in 
+                            (
 			select distinct person_id
-			from (
-				select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year -- min(), max()의 year를 stnd_y로 대체
+			from 
+                                (
+				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
 				from cohort_cdm.NHID_JK
 				group by person_id, age_group
-			) a
+                                ) a
 			group by person_id
 			having count(person_id)>1
-		) b
-		where b.person_id not in (
-			select person_id 
-			from cohort_cdm.NHID_JK
-			where person_id =b.person_id
-			group by person_id, age_group
-			having count(age_group) = 5
-		) 
-	)
+                            )
+		group by person_id, age_group
+		having count(age_group) = 5
+                        ) b
 	group by person_id, age_group
-	) x
+                ) x
 	group by x.person_id
 	having max(x.age_group_cnt) < 5
-) y
+    ) y
 where y.person_id not in (
 select distinct person_id
 from cohort_cdm.NHID_JK
@@ -293,26 +290,25 @@ from (
 	from (
 	select person_id, age_group, count(age_group) as age_group_cnt
 	from cohort_cdm.NHID_JK
-	where person_id in (
-		select distinct person_id
-		from (
+	where person_id in 
+                        (
+		select distinct person_id, age_group
+		from cohort_cdm.NHID_JK
+		where person_id in 
+                            (
 			select distinct person_id
-			from (
-				select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year -- min(), max()의 year를 stnd_y로 대체
+			from 
+                                (
+				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
 				from cohort_cdm.NHID_JK
 				group by person_id, age_group
-			) a
+                                ) a
 			group by person_id
 			having count(person_id)>1
-		) b
-		where b.person_id not in (
-			select person_id 
-			from cohort_cdm.NHID_JK
-			where person_id =b.person_id
-			group by person_id, age_group
-			having count(age_group) = 5
-		) 
-	)
+                            )b
+		group by person_id, age_group
+		having count(age_group) = 5
+                        ) 
 	group by person_id, age_group
 	) x
 	group by x.person_id
@@ -332,13 +328,16 @@ and x.age_group + 1=y.age_group
 and x.max_stnd_y + 1=y.min_stnd_y
 
 group by x.person_id) d2, 
-	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from cohort_cdm.NHID_JK q, (
+                    (select w.person_id, w.stnd_y, q.sex, q.sgg
+                    from cohort_cdm.NHID_JK q, 
+                        (
 		select person_id, max(stnd_y) as stnd_y
 		from cohort_cdm.NHID_JK
-		group by person_id) w
+		group by person_id
+                        ) w
 	where q.person_id=w.person_id
-	and q.stnd_y=w.stnd_y) d3
+	and q.stnd_y=w.stnd_y
+                    ) d3
 where d1.person_id=d2.person_id
 and d1.stnd_y=d2.stnd_y
 and d1.person_id=d3.person_id
