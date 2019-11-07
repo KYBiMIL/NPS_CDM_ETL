@@ -121,6 +121,7 @@ where m.person_id=n.PERSON_ID
 and m.stnd_y=n.stnd_y
 and m.person_id=o.person_id
 ;
+select * count 
 commit;
 /**
 	2) More than 1 intervals + 5 full interval + include 0 interval
@@ -244,12 +245,12 @@ from
 select distinct m.person_id, m.age_group, min(m.stnd_y) as min_stnd_y, max(m.stnd_y) as max_stnd_y
 from cohort_cdm.NHID_JK m, 
 (select distinct person_id, min_age_group
-from (
+from        (
 	select person_id, min(age_group) as min_age_group
 	from        (
 	select person_id, age_group, count(age_group) as age_group_cnt
 	from 
-                    (
+                        (
 		select distinct person_id, age_group
 		from cohort_cdm.NHID_JK
 		where person_id in 
@@ -271,7 +272,7 @@ from (
                 ) x
 	group by x.person_id
 	having max(x.age_group_cnt) < 5
-    ) y
+            ) y
 where y.person_id not in (
 select distinct person_id
 from cohort_cdm.NHID_JK
