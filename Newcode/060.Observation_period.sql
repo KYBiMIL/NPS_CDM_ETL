@@ -60,7 +60,7 @@ select a.*, SYSDATE - day, a.observation_period_end_date, b.observation_period_s
 create global temporary table observation_period_temp4 as
 select
 	a.*, CASE WHEN id=1 THEN 1
-   ELSE SUM(CASE WHEN DAYS>1 THEN 1 ELSE 0 END) OVER(PARTITION BY person_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)+1
+   ELSE SUM(CASE WHEN DAYS>1 THEN 1 ELSE 0 END) OVER(PARTITION BY person_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)||1
    END AS sumday
    from observation_period_temp3 a
    order by person_id, id
@@ -76,21 +76,5 @@ select
 from observation_period_temp4
 group by person_id, sumday
 order by person_id, observation_period_start_date
-                    ) n, 
-                (
-                select w.person_id, w.stnd_y, q.sex, q.sgg
-                from cohort_cdm.NHID_JK q, 
-                (
-		select person_id, max(stnd_y) as stnd_y
-		from cohort_cdm.NHID_JK
-		group by person_id
-                ) w
-	where q.person_id=w.person_id
-	and q.stnd_y=w.stnd_y
-                ) o 
-where m.person_id=n.person_id
-and m.stnd_y=n.stnd_y
-and m.person_id=o.person_id
-;
 
 drop table observation_period_temp1, observation_period_temp2, observation_period_temp3, observation_period_temp4
