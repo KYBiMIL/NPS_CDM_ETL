@@ -87,11 +87,11 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt , 112)) 
-			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt , 112)) 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt, 112)) 
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt, 112)) 
-			else to_date(b.recu_fr_dt, 112)
+		case when b.form_cd in ('02','2','04','06','07','10','12') and b.vscn > 0 then TO_DATE(recu_fr_dt,'yyyymmdd') + vscn -1
+                                 when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then TO_DATE(recu_fr_dt, 'yyyymmdd') + vscn -1
+                                 when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21','31') and vscn > 0 then TO_DATE(recu_fr_dt,'yyyymmdd') + vscn -1
+                                 when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21','31') and vscn = 0 then TO_DATE(recu_fr_dt,'yyyymmdd') + vscn -1
+			else to_date(b.recu_fr_dt, 'yyyymmdd')
 		end as visit_end_date,
 		c.sick_sym,
 		case when c.SEQ_NO=1 then '44786627'--primary condition
