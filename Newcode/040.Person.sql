@@ -154,56 +154,55 @@ select
 from cohort_cdm.NHID_JK m, 
 	(select x.person_id, min(x.stnd_y) as stnd_y
 	from cohort_cdm.NHID_JK x, 
-(
+            (
 		select distinct person_id
 		from cohort_cdm.NHID_JK
 		where age_group=0
 		and person_id in 
-(
+                (
 		select person_id
 		from 
-    (
+                    (
 		select person_id, age_group, count(age_group) as age_group_cnt
+		from
+                        (
+		select distinct person_id, age_group
 		from cohort_cdm.NHID_JK
 		where person_id in 
-                    (
+                            (
 			select distinct person_id
 			from 
-                        (
-				select distinct person_id
-				from 
-                            (
-					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year  -- min(), max()의 year를 stnd_y로 변경해줌
-					from cohort_cdm.NHID_JK
-					group by person_id, age_group
-                            ) a
-				group by person_id
-				having count(person_id)>1
-                        ) b
-			where b.person_id not in 
-                    (   
-				select person_id 
+                                (
+				select person_id, age_group, count(age_group) as age_group_cnt, min(stnd_y) as min_year, max(stnd_y) as max_year 
 				from cohort_cdm.NHID_JK
-				where person_id =b.person_id
 				group by person_id, age_group
-				having count(age_group) = 5
-                    ) 
-                    )
+                                ) a
+			group by person_id
+			having count(person_id)>1
+                            )
 		group by person_id, age_group
-    ) x
+		having count(age_group) = 5
+                        ) b
+		group by person_id, age_group
+                    ) x
 		group by x.person_id
 		having max(x.age_group_cnt) < 5
-) ) y
+                ) 
+            ) y
 	where x.person_id=y.person_id
 	and x.age_group=0
-	group by x.person_id) n,
-	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from cohort_cdm.NHID_JK q, (
+	group by x.person_id
+        ) n,
+                    (select w.person_id, w.stnd_y, q.sex, q.sgg
+                    from cohort_cdm.NHID_JK q, 
+                        (
 		select person_id, max(stnd_y) as stnd_y
 		from cohort_cdm.NHID_JK
-		group by person_id) w
+		group by person_id
+                        ) w
 	where q.person_id=w.person_id
-	and q.stnd_y=w.stnd_y) o 
+	and q.stnd_y=w.stnd_y
+                    ) o 
 where m.person_id=n.person_id
 and m.stnd_y=n.stnd_y
 and m.person_id=o.person_id
