@@ -472,21 +472,25 @@ from cohort_cdm.NHID_JK d1,
 	(select distinct person_id, min_age_group
 	from (
 		select person_id, min(age_group) as min_age_group
-		from (
+		from 
+                        (
 		select person_id, age_group, count(age_group) as age_group_cnt
 		from cohort_cdm.NHID_JK
-		where person_id in (
+		where person_id in 
+                            (
 			select distinct person_id
-			from (
+			from 
+                                (
 				select distinct person_id
-				from (
+				from 
+                                    (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	-- min(), max()의 year를 stnd_y로 대체
 					from cohort_cdm.NHID_JK
 					group by person_id, age_group
-				) a
+                                    ) a
 				group by person_id
 				having count(person_id)>1
-			) b
+                                ) b
 			where b.person_id not in (
 				select person_id 
 				from cohort_cdm.NHID_JK
@@ -494,9 +498,9 @@ from cohort_cdm.NHID_JK d1,
 				group by person_id, age_group
 				having count(age_group) = 5
 			) 
-		)
+                            )
 		group by person_id, age_group
-		) x
+                        ) x
 		group by x.person_id
 		having max(x.age_group_cnt) < 5
 	) y
@@ -564,48 +568,57 @@ select
 	null as ethnicity_source_value,
 	null as ethnicity_source_concept_id
 from cohort_cdm.NHID_JK m, 
-	(select x.person_id, min(stnd_y) as stnd_y
-	from cohort_cdm.NHID_JK x, (
+            (select x.person_id, min(stnd_y) as stnd_y
+            from cohort_cdm.NHID_JK x, 
+                (
 		select distinct person_id, age_group
-		from (
+		from 
+                    (
 		select person_id, age_group, count(age_group) as age_group_cnt
 		from cohort_cdm.NHID_JK
-		where person_id in (
+		where person_id in 
+                        (
 			select distinct person_id
-			from (
+			from 
+                            (
 				select distinct person_id
-				from (
+				from 
+                                (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year	
 					from cohort_cdm.NHID_JK
 					group by person_id, age_group
-				) a
+                                ) a
 				group by person_id
 				having count(person_id)>1
-			) b
-			where b.person_id not in (
+                            ) b
+			where b.person_id not in 
+                        (
 				select person_id 
 				from cohort_cdm.NHID_JK
 				where person_id =b.person_id
 				group by person_id, age_group
 				having count(age_group) = 5
-			) 
-		)
+                        ) 
+                        )
 		group by person_id, age_group
-		) x
+                    ) x
 		group by x.person_id, age_group
 		having max(x.age_group_cnt) > 5
-	) y
+                ) y
 	where x.PERSON_ID=y.PERSON_ID
 	and x.age_group=y.age_group
 	group by x.person_id, x.age_group
-	) n, 
-	(select w.person_id, w.stnd_y, q.sex, q.sgg
-	from cohort_cdm.NHID_JK q, (
+            ) n, 
+    (select w.person_id, w.stnd_y, q.sex, q.sgg
+    from cohort_cdm.NHID_JK q, 
+        (
 		select person_id, max(stnd_y) as stnd_y
 		from cohort_cdm.NHID_JK
-		group by person_id) w
+		group by person_id
+        ) w
 	where q.person_id=w.person_id
-	and q.stnd_y=w.stnd_y) o 
+	and q.stnd_y=w.stnd_y
+    ) o 
 where m.person_id=n.person_id
 and m.stnd_y=n.stnd_y
 and m.person_id=o.person_id
@@ -785,24 +798,24 @@ from cohort_cdm.NHID_JK m,
                     (
 		select person_id, min(age_group) as age_group
 		from 
-                        (
+                                (
 		select person_id, age_group, count(age_group) as age_group_cnt
 		from cohort_cdm.NHID_JK
 		where person_id in 
-                            (												
+                                    (												
 			select distinct person_id
 			from 
-                                (
+                                        (
 				select distinct person_id
 				from 
-                                    (
+                                            (
 					select person_id, age_group, count(age_group) as age_group_cnt, min(STND_Y) as min_year, max(STND_Y) as max_year		
 					from cohort_cdm.NHID_JK
 					group by person_id, age_group
-                                     ) a
+                                             ) a
 				group by person_id
 				having count(person_id)=1
-                                ) b
+                                        ) b
 			where b.person_id not in 
                     (
 				select person_id 
@@ -811,9 +824,9 @@ from cohort_cdm.NHID_JK m,
 				group by person_id, age_group
 				having count(age_group) = 5
                     ) 
-                            )
+                                 )
 		group by person_id, age_group
-                        ) x
+                                ) x
 		group by x.person_id
 		having max(x.age_group_cnt) < 5
                     ) y					
