@@ -297,7 +297,7 @@ INSERT INTO cohort_cdm.OBSERVATION (observation_id, person_id, observation_conce
 
 
 
-CREATE TABLE #observation_mapping09
+CREATE TABLE observation_mapping09
     (
      meas_type						varchar(50)					NULL , 
      id_value						varchar(50)					NULL ,
