@@ -7,11 +7,11 @@
  @NHISNSC_database : DB for NHIS-NSC in CDM format
  @Mapping_database : DB for mapping table
  @NHIS_JK: JK table in NHIS NSC
- @NHIS_20T: 20 table in NHIS NSC
- @NHIS_30T: 30 table in NHIS NSC
- @NHIS_40T: 40 table in NHIS NSC
- @NHIS_60T: 60 table in NHIS NSC
- @NHIS_GJ: GJ table in NHIS NSC
+ @NHID_20T: 20 table in NHIS NSC
+ @NHID_30T: 30 table in NHIS NSC
+ @NHID_40T: 40 table in NHIS NSC
+ @NHID_60T: 60 table in NHIS NSC
+ @NHID_GJ: GJ table in NHIS NSC
  @CONDITION_MAPPINGTABLE : mapping table between KCD and SNOMED-CT
  --Description: Create Condition_occurrence table
  --Generating Table: CONDITION_OCCURRENCE
@@ -87,11 +87,11 @@ select
 from (
 	select
 		a.master_seq, a.person_id, a.key_seq, a.seq_no, b.recu_fr_dt,
-		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1) 
-			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + (b.vscn - 1)  
-			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then to_date(b.recu_fr_dt, 'yyyymmdd') + TO_NUMBER(b.vscn)
-			else to_date(b.recu_fr_dt, 'yyyymmdd')
+		case when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt , 112)) 
+			when b.form_cd in ('02', '2', '04', '06', '07', '10', '12') and b.vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt , 112)) 
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn > 0 then DATEADD(DAY, b.vscn-1, convert(date, b.recu_fr_dt, 112)) 
+			when b.form_cd in ('03', '3', '05', '08', '8', '09', '9', '11', '13', '20', '21', 'ZZ') and b.in_pat_cors_type in ('11', '21', '31') and vscn = 0 then DATEADD(DAY, cast(b.vscn as int), convert(date, b.recu_fr_dt, 112)) 
+			else to_date(b.recu_fr_dt, 112)
 		end as visit_end_date,
 		c.sick_sym,
 		case when c.SEQ_NO=1 then '44786627'--primary condition
@@ -103,15 +103,16 @@ from (
 		case when b.sub_sick=c.sick_sym then 'Y' else 'N' end as sub_sick_yn
 	from (select master_seq, person_id, key_seq, seq_no from cohort_cdm.SEQ_MASTER where source_table='140') a, 
   -- NHISNSC_database
-		cohort_cdm.NHIS_20T b, -- NHISNSC_rawdata 
-		cohort_cdm.NHIS_40T c, -- NHISNSC_rawdata
+		cohort_cdm.NHID_20T b, -- NHISNSC_rawdata 
+		cohort_cdm.NHID_40T c, -- NHISNSC_rawdata
 		cohort_cdm.observation_period d --added, NHISNSC_database
 	where a.person_id=b.person_id
 	and a.key_seq=b.key_seq
 	and a.key_seq=c.key_seq
 	and a.seq_no=c.seq_no
 	and b.person_id=d.person_id --added
-	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date) as m, --added
+	and to_date(c.recu_fr_dt, 'yyyymmdd') between d.observation_period_start_date and d.observation_period_end_date
+    ) as m, --added
 	mapping_table as n -- 임시테이블을 이렇게 불러와도 되는지 의문입니다.
 where m.sick_sym=n.source_code;
 
