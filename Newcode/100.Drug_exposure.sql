@@ -53,7 +53,7 @@ CREATE TABLE cohort_cdm.DRUG_EXPOSURE (
  2-1. Create temp mapping table
 ***************************************/ 
 IF OBJECT_ID('tempdb..mapping_table', 'U') IS NOT NULL
-	DROP TABLE #mapping_table;
+	DROP TABLE mapping_table;
 
 select a.source_code, a.target_concept_id, a.domain_id, REPLACE(a.invalid_reason, '', NULL) as invalid_reason
 into mapping_table
@@ -75,7 +75,7 @@ SELECT to_number(a.master_seq) *10 || convert(bigint, row_number() over (partiti
 	b.target_concept_id as drug_concept_id,
 	to_date(a.recu_fr_dt, 'yyyymmdd') as drug_exposure_start_date,
 	--DATEADD(day, CEILING(convert(float, a.mdcn_exec_freq)/convert(float, a.dd_mqty_exec_freq))-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date, (Modified: 2017.02.17 by SW Lee)
-	DATEADD(day, convert(float, a.mdcn_exec_freq)-1, convert(date, a.recu_fr_dt, 112)) as drug_exposure_end_date,
+	to_date(a.mdcn_exec_freq)-1, to_date(a.recu_fr_dt, 'yyyymmdd')) as drug_exposure_end_date,
 	case when a.FORM_CD in ('02', '2', '04', '06', '10', '12') then 38000180 
 		when a.FORM_CD not in ('02', '2', '04', '06', '10', '12') then 581452 
 		end as drug_type_concept_id, 
@@ -162,7 +162,7 @@ FROM
 	AND x.seq_no=y.seq_no
 	and y.key_seq=z.KEY_SEQ
 	and y.person_id=z.PERSON_ID	) a,
-	#mapping_table b
+	and mapping_table b
 where a.div_cd=b.source_code
 ;
 
@@ -203,7 +203,7 @@ SELECT
 	a.key_seq as visit_occurrence_id,
 	a.div_cd as drug_source_value,
 	null as drug_source_concept_id,
-	a.clause_cd + '/' + a.item_cd as route_source_value,
+	a.clause_cd || '/' || a.item_cd as route_source_value,
 	NULL as dose_unit_source_value
 FROM 
 	(SELECt x.key_seq, x.seq_no, x.recu_fr_dt, x.div_cd,
