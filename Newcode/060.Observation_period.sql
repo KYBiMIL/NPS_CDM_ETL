@@ -24,7 +24,8 @@
 	3) Delete data which have been qulified after death date
 ***************************************/ 
 -- step 1
-create table observation_period_temp1 as
+create global temporary table observation_period_temp1(observation_period_start_date VARCHAR(2000) NOT NULL, observation_period_end_date VARCHAR(2000) NOT NULL )
+on commit preserve rows;
 select 
       a.person_id as person_id, 
       case when a.stnd_y >= b.year_of_birth then to_date(a.stnd_y || '0101', 'yyyymmdd') 
@@ -37,6 +38,7 @@ from cohort_cdm.NHID_JK a,
       cohort_cdm.person b left join cohort_cdm.death c
       on b.person_id=c.person_id
 where a.person_id=b.person_id;
+
 
 -- step 2
 create global temporary table observation_period_temp2 as
@@ -75,7 +77,8 @@ from observation_period_temp4
 group by person_id, sumday
 order by person_id, observation_period_start_date
                     ) n, 
-                (select w.person_id, w.stnd_y, q.sex, q.sgg
+                (
+                select w.person_id, w.stnd_y, q.sex, q.sgg
                 from cohort_cdm.NHID_JK q, 
                 (
 		select person_id, max(stnd_y) as stnd_y
