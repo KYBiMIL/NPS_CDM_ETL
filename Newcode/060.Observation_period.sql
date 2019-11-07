@@ -996,9 +996,6 @@ select
 from observation_period_temp4
 group by person_id, sumday
 order by person_id, observation_period_start_date
-
-drop table observation_period_temp1, observation_period_temp2, observation_period_temp3, observation_period_temp4
-
                     ) n, 
                 (select w.person_id, w.stnd_y, q.sex, q.sgg
                 from cohort_cdm.NHID_JK q, 
@@ -1014,3 +1011,5 @@ where m.person_id=n.person_id
 and m.stnd_y=n.stnd_y
 and m.person_id=o.person_id
 ;
+
+drop table observation_period_temp1, observation_period_temp2, observation_period_temp3, observation_period_temp4
